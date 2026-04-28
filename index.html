@@ -1,0 +1,2225 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Акнауцер 2.0 — рабочий стол</title>
+<style>
+:root{
+  --bg:#f4f6fa;
+  --surface:#ffffff;
+  --surface-2:#fafbfc;
+  --border:#e3e7ee;
+  --border-strong:#d2d8e2;
+  --text:#1a2230;
+  --text-muted:#5a6577;
+  --text-dim:#8a93a3;
+  --primary:#1f5fd6;
+  --primary-hover:#1750b8;
+  --primary-soft:#e7eefb;
+  --accent:#0aa37f;
+  --warn:#c97a14;
+  --danger:#c8442d;
+  --danger-soft:#fdecea;
+  --shadow:0 1px 2px rgba(20,30,55,.04),0 4px 14px rgba(20,30,55,.06);
+  --shadow-lg:0 8px 28px rgba(20,30,55,.14);
+  --radius:10px;
+  --radius-sm:6px;
+  --header-h:64px;
+  --sidebar-w:268px;
+  --sidebar-w-collapsed:68px;
+  --right-w:340px;
+  --font:"Gilroy","Inter","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
+::placeholder{color:var(--text-dim)}
+.icon{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon-sm{width:14px;height:14px}
+.icon-lg{width:22px;height:22px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ========== Layout ========== */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr var(--right-w);grid-template-rows:var(--header-h) 1fr;grid-template-areas:"head head head" "left main right";min-height:100vh;transition:grid-template-columns .25s ease}
+.app.left-collapsed{grid-template-columns:var(--sidebar-w-collapsed) 1fr var(--right-w)}
+.app.left-hidden{grid-template-columns:0 1fr var(--right-w)}
+.app.right-hidden{grid-template-columns:var(--sidebar-w) 1fr 0}
+.app.left-collapsed.right-hidden{grid-template-columns:var(--sidebar-w-collapsed) 1fr 0}
+.app.left-hidden.right-hidden{grid-template-columns:0 1fr 0}
+
+/* ========== Header ========== */
+.head{grid-area:head;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:50}
+.head-left{display:flex;align-items:center;gap:10px;min-width:0}
+.icon-btn{width:36px;height:36px;border-radius:8px;background:transparent;border:none;display:inline-flex;align-items:center;justify-content:center;color:var(--text-muted);position:relative}
+.icon-btn:hover{background:var(--bg);color:var(--text)}
+.icon-btn .badge{position:absolute;top:4px;right:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:600;min-width:16px;height:16px;border-radius:8px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px;font-weight:700;font-size:16px;letter-spacing:.2px;white-space:nowrap}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1f5fd6,#0aa37f);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.workspace-tag{font-size:12px;color:var(--text-muted);padding-left:10px;margin-left:6px;border-left:1px solid var(--border);white-space:nowrap}
+.role-badge{display:inline-flex;align-items:center;gap:6px;background:var(--primary-soft);color:var(--primary);font-weight:600;font-size:12px;padding:5px 10px;border-radius:20px;margin-left:8px;white-space:nowrap}
+.role-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--primary)}
+
+.search{flex:1;max-width:680px;margin:0 14px;position:relative}
+.search-input{width:100%;height:40px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:0 14px 0 40px;outline:none;transition:.15s}
+.search-input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-soft)}
+.search .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim)}
+.search-dd{position:absolute;left:0;right:0;top:46px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:10px;display:none;z-index:60;max-height:60vh;overflow:auto}
+.search.open .search-dd{display:block}
+.dd-section{padding:6px 8px}
+.dd-title{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);font-weight:600;padding:6px 4px}
+.dd-row{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:6px;cursor:pointer;color:var(--text)}
+.dd-row:hover{background:var(--bg)}
+.dd-row .dd-meta{margin-left:auto;font-size:12px;color:var(--text-dim)}
+.dd-suggestion{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:18px;padding:5px 10px;margin:3px 4px 3px 0;font-size:12px;color:var(--text-muted);cursor:pointer}
+.dd-suggestion:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+
+.head-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:500;font-size:13px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--border-strong);background:var(--surface-2)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-danger{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn-sm{height:30px;padding:0 10px;font-size:12px;border-radius:6px}
+.tariff-pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;background:linear-gradient(120deg,#fff1cc,#ffe7b3);color:#7a4a00;font-size:12px;font-weight:600;border:1px solid #f3d98a}
+.tariff-pill .icon{width:14px;height:14px}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7a8cf0,#3a55c4);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer}
+
+/* ========== Popovers ========== */
+.popover{position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);min-width:280px;z-index:70;display:none;overflow:hidden}
+.popover.open{display:block}
+.pop-head{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.pop-body{max-height:60vh;overflow:auto;padding:6px 0}
+.pop-row{padding:10px 14px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid var(--border);cursor:pointer}
+.pop-row:hover{background:var(--bg)}
+.pop-row:last-child{border-bottom:none}
+.pop-row .pop-icon{width:28px;height:28px;flex:none;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center}
+.pop-row.unread .pop-title{font-weight:600}
+.pop-row .pop-title{font-size:13px;color:var(--text)}
+.pop-row .pop-sub{font-size:12px;color:var(--text-dim);margin-top:2px}
+
+.profile-pop{min-width:240px}
+.profile-pop .pp-head{padding:14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
+.profile-pop .pp-head .name{font-weight:600;font-size:14px}
+.profile-pop .pp-head .email{font-size:12px;color:var(--text-dim)}
+.profile-pop .pp-list{padding:6px 0}
+.profile-pop .pp-list a{display:flex;align-items:center;gap:10px;padding:10px 14px;color:var(--text);font-size:13px}
+.profile-pop .pp-list a:hover{background:var(--bg)}
+.profile-pop .pp-divider{height:1px;background:var(--border);margin:4px 0}
+
+.create-pop{min-width:220px}
+.create-pop a{display:flex;align-items:center;gap:10px;padding:10px 14px;color:var(--text);font-size:13px;cursor:pointer}
+.create-pop a:hover{background:var(--bg)}
+.create-pop .pop-icon{width:24px;height:24px;border-radius:6px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center}
+
+/* ========== Left sidebar ========== */
+.left{grid-area:left;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.app.left-hidden .left{display:none}
+.left-top{padding:12px 14px 6px;display:flex;align-items:center;gap:6px}
+.app.left-collapsed .left-top{justify-content:center;padding:12px 8px 6px}
+.left-section{padding:10px 8px}
+.left-section .ls-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);font-weight:600;padding:6px 8px;display:flex;align-items:center;justify-content:space-between}
+.app.left-collapsed .ls-title{display:none}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--text);cursor:pointer;font-size:13.5px;position:relative;white-space:nowrap;overflow:hidden}
+.nav-item:hover{background:var(--bg)}
+.nav-item.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.nav-item.active .icon{color:var(--primary)}
+.nav-item .icon{color:var(--text-muted)}
+.nav-item .badge{margin-left:auto;font-size:11px;background:var(--bg);color:var(--text-muted);padding:2px 7px;border-radius:10px;font-weight:600}
+.nav-item.active .badge{background:#fff;color:var(--primary)}
+.nav-item .chev{margin-left:auto;color:var(--text-dim)}
+.app.left-collapsed .nav-item{justify-content:center;padding:10px 0}
+.app.left-collapsed .nav-item .lbl,
+.app.left-collapsed .nav-item .badge,
+.app.left-collapsed .nav-item .chev{display:none}
+.app.left-collapsed .nav-item{position:relative}
+.app.left-collapsed .nav-item:hover::after{content:attr(data-tip);position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);background:#1a2230;color:#fff;padding:5px 9px;border-radius:6px;font-size:12px;white-space:nowrap;z-index:60}
+.fav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;font-size:13px;color:var(--text);cursor:grab;position:relative;user-select:none}
+.fav-item:hover{background:var(--bg)}
+.fav-item:active{cursor:grabbing}
+.fav-item.dragging{opacity:.45}
+.fav-item.drop-above::before,
+.fav-item.drop-below::after{content:"";position:absolute;left:6px;right:6px;height:2px;background:var(--primary);border-radius:2px;pointer-events:none}
+.fav-item.drop-above::before{top:-1px}
+.fav-item.drop-below::after{bottom:-1px}
+.fav-item .grip{color:var(--text-dim);cursor:grab}
+.fav-tools{display:flex;gap:2px;margin-left:auto;visibility:hidden}
+.fav-item:hover .fav-tools{visibility:visible}
+.fav-tools button{background:transparent;border:none;width:22px;height:22px;color:var(--text-dim);border-radius:4px;display:inline-flex;align-items:center;justify-content:center}
+.fav-tools button:hover{background:var(--bg);color:var(--text)}
+.left-bottom{margin-top:auto;border-top:1px solid var(--border);padding:8px}
+.app.left-collapsed .ls-divider-label{display:none}
+
+/* ========== Main ========== */
+.main{grid-area:main;overflow-y:auto;padding:18px 22px 32px}
+.greet{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.greet h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px}
+.greet .sub{color:var(--text-muted);font-size:13.5px}
+.greet-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.nl-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+.nl-row{display:flex;gap:8px;align-items:center}
+.nl-input{flex:1;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 14px;background:var(--surface-2);outline:none}
+.nl-input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-soft)}
+.nl-suggestions{margin-top:10px}
+.nl-history{margin-top:12px;display:none;border-top:1px dashed var(--border);padding-top:10px}
+.nl-history.open{display:block}
+.nl-history-item{display:flex;justify-content:space-between;gap:10px;padding:6px 4px;font-size:13px;color:var(--text-muted);cursor:pointer;border-radius:4px}
+.nl-history-item:hover{background:var(--bg);color:var(--text)}
+.nl-preview{margin-top:10px;background:var(--primary-soft);border:1px solid #cfdcf6;color:#0e3d97;border-radius:10px;padding:10px 12px;font-size:13px;display:none}
+.nl-preview.open{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.nl-preview-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ========== Widget grid ========== */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.widget{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 16px 16px;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column;min-height:200px;transition:.18s}
+.widget.size-s{grid-column:span 4}
+.widget.size-m{grid-column:span 6}
+.widget.size-l{grid-column:span 12}
+.widget.collapsed{min-height:auto}
+.widget.collapsed .w-body{display:none}
+.widget.hidden{display:none}
+.widget.pinned{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),var(--shadow)}
+.app.edit-mode .widget{border-style:dashed;border-color:var(--primary);background:#fbfdff;cursor:move}
+.app.edit-mode .widget.dragging{opacity:.45}
+.app.edit-mode .widget.drop-before{box-shadow:-4px 0 0 var(--primary),var(--shadow)}
+.app.edit-mode .widget.drop-after{box-shadow:4px 0 0 var(--primary),var(--shadow)}
+.app.edit-mode .w-head{cursor:grab}
+.app.edit-mode .w-head:active{cursor:grabbing}
+.w-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.w-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.w-title .pin{color:var(--primary)}
+.w-controls{margin-left:auto;display:flex;gap:2px;align-items:center}
+.w-controls button{width:26px;height:26px;border:none;background:transparent;color:var(--text-dim);border-radius:5px;display:inline-flex;align-items:center;justify-content:center}
+.w-controls button:hover{background:var(--bg);color:var(--text)}
+.w-controls .size-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-right:4px}
+.w-controls .size-toggle button{width:24px;height:24px;border-radius:0;color:var(--text-muted);font-size:11px;font-weight:600}
+.w-controls .size-toggle button.on{background:var(--primary-soft);color:var(--primary)}
+.w-edit-only{display:none}
+.app.edit-mode .w-edit-only{display:inline-flex}
+.w-body{flex:1}
+.w-foot{margin-top:10px;display:flex;align-items:center;gap:6px}
+.w-foot a{color:var(--primary);font-size:13px;font-weight:500;cursor:pointer}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:10px;overflow-x:auto}
+.tab{padding:8px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+.news-list{display:flex;flex-direction:column;gap:10px}
+.news-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.news-item:last-child{border-bottom:none}
+.news-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:10px;background:var(--bg);color:var(--text-muted);font-weight:500}
+.tag.src{background:var(--primary-soft);color:var(--primary)}
+.tag.warn{background:#fef0e0;color:var(--warn)}
+.news-title{font-weight:600;margin:5px 0 4px;font-size:14px;line-height:1.35;cursor:pointer}
+.news-title:hover{color:var(--primary)}
+.news-excerpt{font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.news-actions{display:flex;gap:4px;flex-wrap:wrap}
+.chip-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;line-height:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-muted);cursor:pointer}
+.chip-btn .icon{width:13px;height:13px;flex:none}
+.chip-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+
+.qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.qa-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-size:13px;text-align:left;cursor:pointer;transition:.15s}
+.qa-btn:hover{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+.qa-btn .icon{color:var(--primary)}
+
+.topics{display:flex;flex-wrap:wrap;gap:6px}
+.topic{display:inline-flex;align-items:center;gap:5px;padding:4px 8px 4px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;font-size:13px;color:var(--text);cursor:pointer;transition:.12s}
+.topic:hover{border-color:var(--primary)}
+.topic .t-label{cursor:pointer;padding:2px 2px}
+.topic .t-label:hover{color:var(--primary)}
+.topic .t-tools{display:inline-flex;align-items:center;gap:2px;margin-left:2px}
+.topic .t-btn{width:20px;height:20px;border:none;background:transparent;color:var(--text-dim);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.topic .t-btn:hover{background:var(--bg);color:var(--text)}
+.topic .t-pin{color:var(--text-dim)}
+.topic.pinned{background:var(--primary-soft);border-color:#cfdcf6}
+.topic.pinned .t-pin{color:var(--primary)}
+.topic .t-hide,.topic .t-remove{display:none}
+.topic:hover .t-hide,.topic:hover .t-remove{display:inline-flex}
+.topics-hidden{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.topics-hidden-head{font-size:12px;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.topics-hidden-head:hover{color:var(--text)}
+.topics-hidden-head .chev{transition:.2s}
+.topics-hidden.open .topics-hidden-head .chev{transform:rotate(180deg)}
+.topics-hidden-list{margin-top:6px;display:none;flex-wrap:wrap;gap:6px}
+.topics-hidden.open .topics-hidden-list{display:flex}
+.topics-hidden-list .topic{opacity:.7}
+.topic-add{display:flex;gap:6px;margin-top:10px;position:relative}
+.topic-add input{flex:1;height:32px;border:1px solid var(--border);border-radius:6px;padding:0 10px;background:var(--surface-2);outline:none}
+.topic-add input:focus{border-color:var(--primary);background:#fff}
+.topic-suggest{position:absolute;left:0;right:0;top:38px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);max-height:240px;overflow:auto;z-index:40;display:none;padding:4px}
+.topic-suggest.open{display:block}
+.topic-suggest-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);font-weight:600;padding:6px 8px 4px}
+.topic-suggest-item{padding:6px 9px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;border-radius:5px;color:var(--text)}
+.topic-suggest-item .ts-mark{color:var(--text-dim)}
+.topic-suggest-item:hover,.topic-suggest-item.active{background:var(--primary-soft);color:var(--primary)}
+.topic-suggest-item .plus{margin-left:auto;color:var(--text-dim);font-size:14px}
+.topic-suggest-item:hover .plus,.topic-suggest-item.active .plus{color:var(--primary)}
+.topic-suggest-create{padding:7px 9px;font-size:13px;cursor:pointer;border-top:1px solid var(--border);margin-top:4px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.topic-suggest-create:hover{color:var(--primary)}
+.topic-suggest-empty{padding:10px;font-size:12.5px;color:var(--text-dim)}
+
+.continue-list{display:flex;flex-direction:column;gap:6px}
+.continue-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer}
+.continue-item:hover{background:var(--bg)}
+.continue-item .ci-icon{width:28px;height:28px;border-radius:6px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.continue-item .ci-title{font-size:13px;font-weight:500}
+.continue-item .ci-sub{font-size:12px;color:var(--text-dim)}
+
+.update-item{padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:10px}
+.update-item:last-child{border-bottom:none}
+.update-marker{width:6px;flex:none;border-radius:3px;background:var(--accent)}
+.update-marker.warn{background:var(--warn)}
+.update-marker.danger{background:var(--danger)}
+.update-body{flex:1}
+.update-title{font-weight:600;font-size:13.5px}
+.update-sub{font-size:12.5px;color:var(--text-muted);margin:2px 0 4px}
+
+.quiz-card{background:linear-gradient(135deg,#eef3ff,#e6f4ee);border:1px solid #d5e3fa;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.quiz-q{font-weight:600;margin-bottom:8px;font-size:13.5px}
+.quiz-options{display:flex;flex-direction:column;gap:5px}
+.quiz-opt{padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer}
+.quiz-opt:hover{border-color:var(--primary);background:var(--primary-soft)}
+.quiz-opt.correct{border-color:var(--accent);background:#e6f7ef;color:var(--accent);font-weight:500}
+.quiz-opt.wrong{border-color:var(--danger);background:var(--danger-soft);color:var(--danger)}
+
+.cme-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.cme-row:last-child{border-bottom:none}
+.cme-progress{flex:none;width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--bg) 0);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text);position:relative}
+.cme-progress::before{content:"";position:absolute;inset:5px;background:#fff;border-radius:50%}
+.cme-progress span{position:relative;z-index:1}
+.cme-meta .ci-title{font-size:13px;font-weight:500}
+.cme-meta .ci-sub{font-size:12px;color:var(--text-dim)}
+
+.fav-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.fav-card{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer}
+.fav-card:hover{border-color:var(--primary)}
+.fav-card .icon{color:var(--primary)}
+
+/* ========== Right sidebar ========== */
+.right{grid-area:right;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:14px 12px 24px;display:flex;flex-direction:column;gap:12px}
+.app.right-hidden .right{display:none}
+.right-head{display:flex;align-items:center;gap:4px;padding:0 4px 8px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.rh-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.rh-btn{width:28px;height:28px}
+.rh-btn .icon{width:16px;height:16px}
+.rh-btn.pinned{background:var(--primary-soft);color:var(--primary)}
+
+/* edge tab to bring hidden panel back (desktop) */
+.right-edge-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);background:#1a2230;color:#fff;padding:10px 8px;border-radius:8px 0 0 8px;cursor:pointer;display:none;align-items:center;gap:6px;z-index:55;box-shadow:var(--shadow-lg);font-size:12px;writing-mode:vertical-rl}
+.right-edge-tab .icon{width:14px;height:14px}
+.app.right-hidden .right-edge-tab{display:inline-flex}
+.right-edge-tab:hover{background:#2c3a52}
+
+/* header toggle visual state for right panel */
+#btn-toggle-right.active{background:var(--primary-soft);color:var(--primary)}
+
+/* unpinned floating overlay (desktop) */
+.app.right-floating{grid-template-columns:var(--sidebar-w) 1fr 0}
+.app.left-collapsed.right-floating{grid-template-columns:var(--sidebar-w-collapsed) 1fr 0}
+.app.left-hidden.right-floating{grid-template-columns:0 1fr 0}
+.app.right-floating .right{position:fixed;right:0;top:var(--header-h);bottom:0;width:var(--right-w);z-index:55;box-shadow:var(--shadow-lg)}
+.app.right-floating.right-hidden .right{display:none}
+.r-section{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.r-section.collapsed .r-body{display:none}
+.r-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer}
+.r-head .count{font-size:11px;color:var(--text-dim);background:#fff;border:1px solid var(--border);border-radius:8px;padding:1px 6px;margin-left:6px;font-weight:500}
+.r-head .chev{margin-left:auto;color:var(--text-dim);transition:.2s}
+.r-section.collapsed .chev{transform:rotate(-90deg)}
+.r-body{margin-top:8px}
+.r-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:12.5px;color:var(--text);border-bottom:1px solid var(--border)}
+.r-row:last-child{border-bottom:none}
+.r-row .r-time{font-size:11px;color:var(--text-dim);margin-top:2px}
+.r-note{padding:7px 9px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12.5px;margin-bottom:5px;color:var(--text)}
+.r-note .r-note-meta{font-size:11px;color:var(--text-dim);margin-top:3px}
+.r-note-add{display:flex;gap:5px;margin-top:6px}
+.r-note-add input{flex:1;height:28px;border:1px solid var(--border);border-radius:5px;padding:0 8px;background:#fff;font-size:12.5px;outline:none}
+.r-note-add input:focus{border-color:var(--primary)}
+.r-task{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--border)}
+.r-task:last-child{border-bottom:none}
+.r-task input[type=checkbox]{margin-top:2px;accent-color:var(--primary);cursor:pointer}
+.r-task.done .r-task-text{text-decoration:line-through;color:var(--text-dim)}
+.r-task .r-task-meta{font-size:11px;color:var(--text-dim);margin-top:1px}
+.r-recommend{display:flex;align-items:center;gap:8px;padding:7px 9px;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:5px;font-size:12.5px;cursor:pointer}
+.r-recommend .icon{color:var(--primary)}
+.r-recommend:hover{border-color:var(--primary)}
+.subscription{background:linear-gradient(140deg,#eaf2ff,#fff);border:1px solid #d8e3f8;border-radius:10px;padding:10px 12px}
+.subscription .sub-tier{font-weight:700;font-size:14px;color:var(--primary)}
+.sub-meter{margin-top:8px}
+.sub-meter .sm-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin:6px 0 3px}
+.sm-bar{height:5px;border-radius:3px;background:#dde6f5;overflow:hidden}
+.sm-bar > div{height:100%;background:var(--primary)}
+.sm-bar > div.warn{background:var(--warn)}
+.sm-bar > div.danger{background:var(--danger)}
+
+/* ========== Add widget panel ========== */
+.add-panel{position:fixed;top:var(--header-h);right:0;bottom:0;width:340px;background:#fff;border-left:1px solid var(--border);box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .25s ease;z-index:80;display:flex;flex-direction:column}
+.add-panel.open{transform:translateX(0)}
+.add-panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.add-panel-body{flex:1;overflow:auto;padding:10px}
+.add-tile{padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.add-tile:hover{border-color:var(--primary);background:var(--primary-soft)}
+.add-tile .at-icon{width:32px;height:32px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center}
+.add-tile .at-title{font-weight:600;font-size:13px}
+.add-tile .at-sub{font-size:12px;color:var(--text-dim)}
+.add-tile.added{opacity:.55;cursor:not-allowed}
+
+/* ========== Modals & overlays ========== */
+.overlay{position:fixed;inset:0;background:rgba(20,30,55,.45);display:none;align-items:center;justify-content:center;z-index:90;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;max-height:90vh;overflow:auto}
+.modal.lg{max-width:760px}
+.modal-head{padding:18px 22px 6px}
+.modal-head .h{font-size:20px;font-weight:700;margin:0}
+.modal-head .h-sub{color:var(--text-muted);font-size:13.5px;margin-top:5px}
+.modal-body{padding:14px 22px 22px}
+.modal-foot{padding:0 22px 22px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.field{margin:10px 0}
+.field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);outline:none}
+.field textarea{height:auto;padding:10px 12px;min-height:80px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-soft)}
+.checkbox{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text);margin:8px 0;cursor:pointer}
+.checkbox input{margin-top:2px;accent-color:var(--primary)}
+.role-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.role-tile{padding:12px 14px;border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;background:#fff}
+.role-tile:hover{border-color:var(--primary)}
+.role-tile.selected{border-color:var(--primary);background:var(--primary-soft)}
+.role-tile .rt-title{font-weight:600;font-size:13.5px}
+.role-tile .rt-sub{font-size:12px;color:var(--text-dim);margin-top:3px}
+.template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.tmpl-tile{border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;background:#fff;transition:.15s}
+.tmpl-tile:hover{border-color:var(--primary)}
+.tmpl-tile.selected{border-color:var(--primary);background:var(--primary-soft)}
+.tmpl-tile .tt-title{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.tmpl-tile .tt-sub{font-size:12px;color:var(--text-muted)}
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.steps .step{flex:1;height:4px;border-radius:2px;background:var(--bg)}
+.steps .step.on{background:var(--primary)}
+
+/* ========== Demo state switcher ========== */
+.state-switcher{position:fixed;bottom:14px;left:14px;background:#1a2230;color:#fff;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow-lg);z-index:75;flex-wrap:wrap;max-width:calc(100% - 28px);transition:.18s ease}
+.state-switcher .ss-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8d97ad;font-weight:600;margin-right:4px}
+.ss-btn{background:transparent;border:1px solid #2c3a52;color:#cfd6e4;font-size:12px;padding:5px 9px;border-radius:6px;cursor:pointer}
+.ss-btn:hover{background:#2c3a52;color:#fff}
+.ss-btn.on{background:#1f5fd6;border-color:#1f5fd6;color:#fff}
+.ss-toggle{width:28px;height:28px;border:none;background:#2c3a52;color:#cfd6e4;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.ss-toggle:hover{background:#374563;color:#fff}
+.ss-toggle .icon{transition:.2s}
+.state-switcher .ss-toggle .icon{transform:rotate(180deg)}
+.state-switcher.collapsed{padding:6px;flex-wrap:nowrap;max-width:none}
+.state-switcher.collapsed > *:not(.ss-toggle){display:none}
+.state-switcher.collapsed .ss-toggle{width:32px;height:32px;background:transparent}
+.state-switcher.collapsed .ss-toggle .icon{transform:rotate(0deg)}
+
+/* ========== States: empty / loading / error / expired ========== */
+.state-banner{background:#fff;border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.state-banner.danger{border-left-color:var(--danger)}
+.state-banner.info{border-left-color:var(--primary)}
+.state-banner .b-actions{margin-left:auto;display:flex;gap:6px}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted)}
+.empty-state h3{margin:0 0 6px;color:var(--text)}
+.empty-state p{margin:0 0 14px;font-size:13.5px}
+.skeleton-grid{display:flex;flex-direction:column;gap:8px}
+.skeleton{height:14px;border-radius:4px;background:linear-gradient(90deg,#eef1f6,#f6f8fb,#eef1f6);background-size:200% 100%;animation:sk 1.4s linear infinite}
+.skeleton.h{height:60px}
+@keyframes sk{0%{background-position:0% 0}100%{background-position:-200% 0}}
+.lock-state{background:linear-gradient(135deg,#fff8e6,#fff);border:1px dashed #f0d68a;border-radius:10px;padding:18px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.lock-state .lock-ico{width:36px;height:36px;border-radius:50%;background:#fef0e0;color:var(--warn);display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px}
+.lock-state h4{margin:0;font-size:14px;color:var(--text)}
+.lock-state p{margin:0;font-size:12.5px;color:var(--text-muted);max-width:320px}
+.lock-state .lock-cta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
+
+/* First-login state */
+.first-login{display:flex;flex-direction:column;gap:18px;max-width:920px;margin:0 auto}
+.fl-greet h2{font-size:22px;margin:0 0 6px}
+.fl-greet p{color:var(--text-muted);margin:0}
+.fl-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fl-card h3{margin:0 0 12px;font-size:15px}
+
+/* ========== Responsive ========== */
+@media(max-width:1100px){
+  :root{--right-w:300px}
+}
+@media(max-width:900px){
+  .app{grid-template-columns:0 1fr 0;grid-template-areas:"head head head" "main main main"}
+  .left{position:fixed;top:var(--header-h);bottom:0;left:0;width:280px;z-index:85;transform:translateX(-100%);transition:transform .25s ease;display:flex;border-right:1px solid var(--border)}
+  .right{position:fixed;top:var(--header-h);bottom:0;right:0;width:300px;z-index:85;transform:translateX(100%);transition:transform .25s ease;display:flex;border-left:1px solid var(--border)}
+  .app.mobile-left-open .left{transform:translateX(0)}
+  .app.mobile-right-open .right{transform:translateX(0)}
+  .app.left-collapsed{grid-template-columns:0 1fr 0}
+  .head .desktop-only{display:none!important}
+  .head .mobile-only{display:inline-flex!important}
+  .search{margin:0 6px}
+  .workspace-tag,.role-badge{display:none}
+  .grid{display:flex;flex-direction:column}
+  .widget.size-s,.widget.size-m,.widget.size-l{grid-column:auto}
+  .qa-grid{grid-template-columns:1fr}
+  .greet{flex-direction:column}
+  .add-panel{width:100%}
+  .modal{max-width:100%}
+  .role-grid{grid-template-columns:1fr}
+  .nl-row{flex-wrap:wrap}
+  .nl-input{width:100%;flex:1 1 auto}
+}
+.mobile-only{display:none}
+@media(min-width:901px){
+  .head .mobile-only{display:none!important}
+}
+
+/* utility */
+.hidden{display:none!important}
+.flex{display:flex}
+.gap-6{gap:6px}
+.row-end{display:flex;justify-content:flex-end;gap:8px}
+
+</style>
+</head>
+<body>
+
+<!-- ===== Inline icon defs (sprite) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 6 1.5 6h-15s1.5-2 1.5-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5.76a2 2 0 0 0 1.11 1.79l1.78.9A2 2 0 0 1 19 14.24V16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1.76a2 2 0 0 1 1.11-1.79l1.78-.9A2 2 0 0 0 9 10.76Z"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24"><path d="M4 4h13v16H4z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><path d="M7 8h7M7 12h7M7 16h5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 12 9-9 9 9"/><path d="M5 10v10h14V10"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+    <symbol id="i-stetho" viewBox="0 0 24 24"><path d="M6 3v6a4 4 0 0 0 8 0V3"/><circle cx="18" cy="14" r="2"/><path d="M10 13v3a4 4 0 0 0 8 0v-3"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="6" rx="3" transform="rotate(-30 12 12)"/></symbol>
+    <symbol id="i-mix" viewBox="0 0 24 24"><path d="M5 3 5 21M19 3v18M5 9h14M5 15h14"/></symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h2M13 11h2M9 15h2M13 15h2M9 19h2M13 19h2"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+    <symbol id="i-translate" viewBox="0 0 24 24"><path d="M4 5h12M10 3v2c0 5-4 9-7 9M9 9c0 4 4 7 9 7"/><path d="m13 21 4-9 4 9M14.5 17h5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-quiz" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 4.5 2.6c-.7.4-1.5 1-1.5 1.9V14"/><circle cx="12" cy="17" r=".7" fill="currentColor"/></symbol>
+    <symbol id="i-graduate" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5Z"/><path d="M6 11v5c0 2 3 3 6 3s6-1 6-3v-5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h8M8 9h2"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 11h20"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.5 2c-1 1-2 1-2 2.5"/><circle cx="12" cy="17" r=".7" fill="currentColor"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h7"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6 .9-4.4 4.3 1 6L12 17l-5.3 2.7 1-6L3.3 9.4l6-.9Z"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4Z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8 11 8-4M8 13l8 4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6A2 2 0 0 0 12 14a2 2 0 0 0 2-2c0-.6-.2-1-.6-1.4M9.5 5.2A10 10 0 0 1 12 5c6 0 10 7 10 7a18 18 0 0 1-3 3.8M6.6 6.6A18 18 0 0 0 2 12s4 7 10 7c1.4 0 2.7-.3 3.8-.7"/></symbol>
+    <symbol id="i-resize" viewBox="0 0 24 24"><path d="M21 3h-6M21 3v6M21 3l-7 7M3 21h6M3 21v-6M3 21l7-7"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v6M12 15v6M3 12h6M15 12h6M5.6 5.6l4.2 4.2M14.2 14.2l4.2 4.2M5.6 18.4l4.2-4.2M14.2 9.8l4.2-4.2"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0-5 5v0a5 5 0 0 0 5 5h6"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3l-8.5-14.4a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17v.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16Z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 7 5 4 4-7 4 7 5-4-2 12H5Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l12-7Z"/></symbol>
+    <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h3l8 5V5L7 10H4a1 1 0 0 0-1 1Z"/><path d="M18 8a4 4 0 0 1 0 8"/></symbol>
+    <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-pin-off" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5.76a2 2 0 0 0 1.11 1.79l1.78.9A2 2 0 0 1 19 14.24V16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1.76a2 2 0 0 1 1.11-1.79l1.78-.9A2 2 0 0 0 9 10.76Z"/><path d="m3 3 18 18" stroke="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<!-- ===== App shell ===== -->
+<div class="app" id="app">
+
+  <!-- ============= HEADER ============= -->
+  <header class="head">
+    <div class="head-left">
+      <button class="icon-btn desktop-only" id="btn-toggle-left" title="Свернуть/раскрыть меню" aria-label="Меню">
+        <svg class="icon"><use href="#i-menu"/></svg>
+      </button>
+      <button class="icon-btn mobile-only" id="btn-mobile-left" title="Меню">
+        <svg class="icon"><use href="#i-menu"/></svg>
+      </button>
+      <div class="logo">
+        <span class="logo-mark">A</span>
+        <span>Акнауцер</span>
+        <span class="workspace-tag">рабочий стол</span>
+        <span class="role-badge"><span class="dot"></span><span id="role-label">Кардиолог</span></span>
+      </div>
+    </div>
+
+    <div class="search" id="search-box">
+      <svg class="icon search-icon"><use href="#i-search"/></svg>
+      <input class="search-input" id="search-input"
+             placeholder="Найдите сервис, новость, клинрекомендацию, ОХЛП или задачу"
+             autocomplete="off"/>
+      <div class="search-dd" id="search-dd">
+        <div class="dd-section">
+          <div class="dd-title">Примеры запросов</div>
+          <div>
+            <span class="dd-suggestion" data-q="новости по кардиологии за 7 дней">новости по кардиологии за 7 дней</span>
+            <span class="dd-suggestion" data-q="найти ОХЛП апиксабан">найти ОХЛП апиксабан</span>
+            <span class="dd-suggestion" data-q="создать тест по видео">создать тест по видео</span>
+            <span class="dd-suggestion" data-q="переведи этот abstract">переведи этот abstract</span>
+            <span class="dd-suggestion" data-q="покажи тренажёры по антибиотикам">покажи тренажёры по антибиотикам</span>
+          </div>
+        </div>
+        <div id="search-results"></div>
+        <div class="dd-section">
+          <div class="dd-title">Быстрые действия</div>
+          <div class="dd-row" data-action="open-create"><svg class="icon"><use href="#i-plus"/></svg>Создать новость / подборку<span class="dd-meta">⌘ N</span></div>
+          <div class="dd-row" data-action="open-translate"><svg class="icon"><use href="#i-translate"/></svg>Запустить перевод</div>
+          <div class="dd-row" data-action="open-trainer"><svg class="icon"><use href="#i-target"/></svg>Открыть тренажёр</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="head-actions">
+      <button class="btn btn-ghost desktop-only" id="btn-customize" title="Настроить рабочий стол">
+        <svg class="icon"><use href="#i-settings"/></svg><span>Настроить рабочий стол</span>
+      </button>
+      <button class="btn btn-ghost desktop-only" id="btn-add-widget" title="Добавить виджет">
+        <svg class="icon"><use href="#i-grid"/></svg><span>Добавить виджет</span>
+      </button>
+      <div style="position:relative">
+        <button class="btn btn-primary" id="btn-create">
+          <svg class="icon"><use href="#i-plus"/></svg><span>Создать</span>
+        </button>
+        <div class="popover create-pop" id="pop-create">
+          <div class="pop-head">Создать <button class="icon-btn" data-close-pop="pop-create"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div>
+          <a data-create="news"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-news"/></svg></span>Новость / подборку</a>
+          <a data-create="translate"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-translate"/></svg></span>Перевод медтекста</a>
+          <a data-create="transcribe"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-mic"/></svg></span>Транскрибацию видео</a>
+          <a data-create="test"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-quiz"/></svg></span>Тест / квиз</a>
+          <a data-create="trainer"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-target"/></svg></span>Тренажёр</a>
+          <a data-create="note"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-doc"/></svg></span>Заметку</a>
+        </div>
+      </div>
+
+      <div style="position:relative">
+        <button class="icon-btn" id="btn-notifs" title="Уведомления">
+          <svg class="icon"><use href="#i-bell"/></svg>
+          <span class="badge" id="notif-badge">4</span>
+        </button>
+        <div class="popover" id="pop-notifs">
+          <div class="pop-head">Уведомления <button class="btn btn-sm btn-ghost" id="mark-read">Отметить прочитанными</button></div>
+          <div class="pop-body" id="notif-list"></div>
+        </div>
+      </div>
+
+      <div style="position:relative">
+        <button class="icon-btn desktop-only" id="btn-tasks" title="Входящие действия">
+          <svg class="icon"><use href="#i-inbox"/></svg>
+          <span class="badge">2</span>
+        </button>
+        <div class="popover" id="pop-tasks">
+          <div class="pop-head">Входящие действия</div>
+          <div class="pop-body">
+            <div class="pop-row"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-doc"/></svg></span><div><div class="pop-title">Закончить транскрибацию «Лекция по ХСН»</div><div class="pop-sub">Готова на 80%</div></div></div>
+            <div class="pop-row"><span class="pop-icon"><svg class="icon icon-sm"><use href="#i-quiz"/></svg></span><div><div class="pop-title">Согласовать тест «Антикоагулянты»</div><div class="pop-sub">10 вопросов, ждёт публикации</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tariff-pill desktop-only" id="tariff-pill" title="Подписка">
+        <svg class="icon"><use href="#i-crown"/></svg>
+        <span id="tariff-label">Pro · до 12.07</span>
+      </div>
+
+      <button class="icon-btn desktop-only" id="btn-toggle-right" title="Боковая панель">
+        <svg class="icon"><use href="#i-panel-right"/></svg>
+      </button>
+      <button class="icon-btn mobile-only" id="btn-mobile-right" title="Панель">
+        <svg class="icon"><use href="#i-inbox"/></svg>
+      </button>
+
+      <div style="position:relative">
+        <button class="avatar" id="btn-profile" title="Профиль">АИ</button>
+        <div class="popover profile-pop" id="pop-profile">
+          <div class="pp-head">
+            <div class="avatar" style="cursor:default">АИ</div>
+            <div>
+              <div class="name">Анна Иванова</div>
+              <div class="email">anna.ivanova@aknaucer.ru</div>
+            </div>
+          </div>
+          <div class="pp-list">
+            <a><svg class="icon icon-sm"><use href="#i-stetho"/></svg>Профиль и роль</a>
+            <a><svg class="icon icon-sm"><use href="#i-grid"/></svg>Мои сервисы</a>
+            <a><svg class="icon icon-sm"><use href="#i-card"/></svg>Подписки и оплаты</a>
+            <a><svg class="icon icon-sm"><use href="#i-settings"/></svg>Настройки</a>
+            <div class="pp-divider"></div>
+            <a><svg class="icon icon-sm"><use href="#i-help"/></svg>Помощь</a>
+            <a id="open-login"><svg class="icon icon-sm"><use href="#i-mail"/></svg>Регистрация / вход</a>
+            <a><svg class="icon icon-sm"><use href="#i-arrow-right"/></svg>Выйти</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============= LEFT SIDEBAR ============= -->
+  <aside class="left">
+    <div class="left-section">
+      <div class="nav-item active" data-tip="Главная"><svg class="icon"><use href="#i-home"/></svg><span class="lbl">Главная</span></div>
+      <div class="nav-item" data-tip="Все сервисы"><svg class="icon"><use href="#i-grid"/></svg><span class="lbl">Все сервисы</span></div>
+    </div>
+    <div class="left-section">
+      <div class="ls-title">Сервисы</div>
+      <div class="nav-item" data-tip="Новости"><svg class="icon"><use href="#i-news"/></svg><span class="lbl">Новости</span><span class="badge">12</span></div>
+      <div class="nav-item" data-tip="Клинический комбайн"><svg class="icon"><use href="#i-stetho"/></svg><span class="lbl">Клинический комбайн</span></div>
+      <div class="nav-item" data-tip="Клинрекомендации"><svg class="icon"><use href="#i-doc"/></svg><span class="lbl">Клинрекомендации</span><span class="badge">3</span></div>
+      <div class="nav-item" data-tip="ОХЛП и препараты"><svg class="icon"><use href="#i-pill"/></svg><span class="lbl">ОХЛП и препараты</span></div>
+      <div class="nav-item" data-tip="Проверка взаимодействий"><svg class="icon"><use href="#i-mix"/></svg><span class="lbl">Проверка взаимодействий</span></div>
+      <div class="nav-item" data-tip="Калькуляторы и шкалы"><svg class="icon"><use href="#i-calc"/></svg><span class="lbl">Калькуляторы и шкалы</span></div>
+      <div class="nav-item" data-tip="Тренажёры"><svg class="icon"><use href="#i-target"/></svg><span class="lbl">Тренажёры</span></div>
+      <div class="nav-item" data-tip="Перевод медтекстов"><svg class="icon"><use href="#i-translate"/></svg><span class="lbl">Перевод медтекстов</span></div>
+      <div class="nav-item" data-tip="Транскрибация видео"><svg class="icon"><use href="#i-mic"/></svg><span class="lbl">Транскрибация видео</span></div>
+      <div class="nav-item" data-tip="Тесты и квизы"><svg class="icon"><use href="#i-quiz"/></svg><span class="lbl">Тесты и квизы</span></div>
+      <div class="nav-item" data-tip="Курсы / НМО / аккредитация"><svg class="icon"><use href="#i-graduate"/></svg><span class="lbl">Курсы / НМО / аккредитация</span></div>
+      <div class="nav-item" data-tip="Подборки и дайджесты"><svg class="icon"><use href="#i-bookmark"/></svg><span class="lbl">Подборки и дайджесты</span></div>
+      <div class="nav-item" data-tip="Мои документы / заметки"><svg class="icon"><use href="#i-folder"/></svg><span class="lbl">Мои документы / заметки</span></div>
+      <div class="nav-item" data-tip="Подписки и тарифы"><svg class="icon"><use href="#i-card"/></svg><span class="lbl">Подписки и тарифы</span></div>
+    </div>
+
+    <div class="left-section">
+      <div class="ls-title">
+        Избранные сервисы
+        <button class="btn btn-sm btn-ghost" id="fav-edit" title="Редактировать"><svg class="icon icon-sm"><use href="#i-edit"/></svg></button>
+      </div>
+      <div id="favorites-list"></div>
+    </div>
+
+    <div class="left-bottom">
+      <div class="nav-item" data-tip="Помощь / база знаний"><svg class="icon"><use href="#i-help"/></svg><span class="lbl">Помощь / база знаний</span></div>
+      <div class="nav-item" data-tip="Сообщить о проблеме"><svg class="icon"><use href="#i-flag"/></svg><span class="lbl">Сообщить о проблеме</span></div>
+      <div class="nav-item" data-tip="Онбординг / тур" id="open-onboarding"><svg class="icon"><use href="#i-route"/></svg><span class="lbl">Онбординг / тур</span></div>
+    </div>
+  </aside>
+
+  <!-- ============= MAIN ============= -->
+  <main class="main" id="main"></main>
+
+  <!-- ============= RIGHT SIDEBAR ============= -->
+  <aside class="right" id="right">
+    <div class="right-head">
+      <span class="rh-title">Панель</span>
+      <button class="icon-btn rh-btn" id="btn-pin-right" title="Закрепить / открепить">
+        <svg class="icon icon-sm" id="pin-right-icon"><use href="#i-pin"/></svg>
+      </button>
+      <button class="icon-btn rh-btn" id="btn-hide-right" title="Скрыть панель">
+        <svg class="icon icon-sm"><use href="#i-x"/></svg>
+      </button>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Уведомления <span class="count" id="r-notif-count">4</span><svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body" id="r-notif-list"></div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Быстрые заметки <span class="count" id="r-notes-count">0</span><svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body">
+        <div id="notes-list"></div>
+        <div class="r-note-add">
+          <input id="note-input" placeholder="Новая заметка..." />
+          <button class="btn btn-sm btn-primary" id="add-note">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Задачи и напоминания <span class="count" id="r-task-count">0</span><svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body" id="tasks-list"></div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Последние действия <svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body">
+        <div class="r-row"><svg class="icon icon-sm" style="color:var(--primary);margin-top:1px"><use href="#i-translate"/></svg><div><div>Перевод abstract «Heart Failure 2025»</div><div class="r-time">2 мин назад</div></div></div>
+        <div class="r-row"><svg class="icon icon-sm" style="color:var(--primary);margin-top:1px"><use href="#i-quiz"/></svg><div><div>Тест по антикоагулянтам — 8/10</div><div class="r-time">1 ч назад</div></div></div>
+        <div class="r-row"><svg class="icon icon-sm" style="color:var(--primary);margin-top:1px"><use href="#i-search"/></svg><div><div>Поиск: ОХЛП апиксабан</div><div class="r-time">сегодня</div></div></div>
+      </div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Мои коллекции <svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body">
+        <div class="r-recommend"><svg class="icon icon-sm"><use href="#i-bookmark"/></svg><div><div>Антикоагулянты — 14 материалов</div></div></div>
+        <div class="r-recommend"><svg class="icon icon-sm"><use href="#i-bookmark"/></svg><div><div>ХСН и кардиомиопатии — 9 материалов</div></div></div>
+        <div class="r-recommend"><svg class="icon icon-sm"><use href="#i-bookmark"/></svg><div><div>НМО 2026 — 7 курсов</div></div></div>
+      </div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Рекомендованные сервисы <svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body">
+        <div class="r-recommend"><svg class="icon icon-sm"><use href="#i-target"/></svg><div><div>Тренажёр по антибиотикотерапии</div></div></div>
+        <div class="r-recommend"><svg class="icon icon-sm"><use href="#i-mix"/></svg><div><div>Проверка взаимодействий новых препаратов</div></div></div>
+      </div>
+    </div>
+    <div class="r-section">
+      <div class="r-head">Подписка и лимиты <svg class="icon chev"><use href="#i-chev-down"/></svg></div>
+      <div class="r-body">
+        <div class="subscription">
+          <div class="sub-tier">Тариф Pro</div>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px" id="sub-status">Активен до 12.07.2026 · автопродление включено</div>
+          <div class="sub-meter">
+            <div class="sm-row"><span>Переводы</span><span><b id="m1-used">42</b>/100</span></div>
+            <div class="sm-bar"><div style="width:42%"></div></div>
+            <div class="sm-row"><span>Транскрибация</span><span><b id="m2-used">3.2</b> ч / 10 ч</span></div>
+            <div class="sm-bar"><div class="warn" style="width:32%"></div></div>
+            <div class="sm-row"><span>Тренажёры</span><span><b>17</b>/50</span></div>
+            <div class="sm-bar"><div style="width:34%"></div></div>
+            <div class="sm-row"><span>Генерации статей</span><span><b>9</b>/20</span></div>
+            <div class="sm-bar"><div style="width:45%"></div></div>
+          </div>
+          <button class="btn btn-sm btn-primary" style="margin-top:10px" id="sub-manage">Управлять подпиской</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Edge tab to restore hidden right panel -->
+<div class="right-edge-tab" id="right-edge-tab" title="Показать панель">
+  <svg class="icon"><use href="#i-panel-right"/></svg>
+  <span>Показать панель</span>
+</div>
+
+<!-- ============= Add widget side panel ============= -->
+<div class="add-panel" id="add-panel">
+  <div class="add-panel-head">
+    Добавить виджет
+    <button class="icon-btn" data-close-panel><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="add-panel-body" id="add-panel-body"></div>
+</div>
+
+<!-- ============= Login / registration overlay ============= -->
+<div class="overlay" id="login-overlay">
+  <div class="modal" id="login-modal">
+    <div class="modal-head">
+      <h3 class="h">Вход в Акнауцер</h3>
+      <div class="h-sub">Введите email — мы определим, есть ли у вас аккаунт.</div>
+    </div>
+    <div class="modal-body">
+      <div id="login-step-email">
+        <div class="field">
+          <label>Email</label>
+          <input id="login-email" type="email" placeholder="name@clinic.ru" autocomplete="email"/>
+        </div>
+      </div>
+
+      <div id="login-step-existing" class="hidden">
+        <p style="margin:0 0 10px;color:var(--text-muted)">Найден аккаунт <b id="ex-email"></b>. Выберите способ входа:</p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px" id="send-magic">Войти по ссылке из письма (magic link)</button>
+        <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" id="use-password">Войти по паролю</button>
+        <a style="color:var(--primary);font-size:13px;cursor:pointer">Забыли пароль?</a>
+      </div>
+
+      <div id="login-step-password" class="hidden">
+        <div class="field"><label>Пароль</label><input type="password" placeholder="••••••••"/></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" id="login-submit">Войти</button>
+      </div>
+
+      <div id="login-step-magic-sent" class="hidden">
+        <div class="state-banner info">
+          <svg class="icon"><use href="#i-mail"/></svg>
+          <div>Отправили ссылку на <b id="magic-email"></b>. Откройте письмо и нажмите «Войти в кабинет».</div>
+        </div>
+        <button class="btn" style="margin-top:10px" id="simulate-click-magic">Имитировать переход по ссылке →</button>
+      </div>
+
+      <div id="login-step-old-user" class="hidden">
+        <div class="state-banner">
+          <svg class="icon"><use href="#i-warn"/></svg>
+          <div>У вас уже есть аккаунт со старого сайта. Используйте вход по ссылке из письма или старый пароль — мы не будем создавать дубль.</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin:10px 0 8px" id="old-magic">Получить ссылку для входа</button>
+        <button class="btn" style="width:100%;justify-content:center" id="old-password">Использовать старый пароль</button>
+      </div>
+
+      <div id="login-step-register" class="hidden">
+        <div class="state-banner info">
+          <svg class="icon"><use href="#i-mail"/></svg>
+          <div>Аккаунта не нашли. Подтвердим email и заполним короткий профиль.</div>
+        </div>
+        <div class="field"><label>Имя</label><input id="reg-first" placeholder="Анна"/></div>
+        <div class="field"><label>Фамилия</label><input id="reg-last" placeholder="Иванова"/></div>
+        <div class="field">
+          <label>Роль</label>
+          <select id="reg-role">
+            <option>Врач</option><option>Провизор / фармацевт</option>
+            <option>Медицинский представитель</option><option>Студент</option>
+            <option>Ординатор</option><option>Преподаватель / сотрудник вуза</option>
+          </select>
+        </div>
+        <div class="field"><label>Специальность / область интересов</label><input id="reg-spec" placeholder="Кардиология, антикоагулянты..."/></div>
+        <label class="checkbox"><input type="checkbox" id="reg-prof" checked> Подтверждаю, что отношусь к медицинским или фармацевтическим специалистам</label>
+        <label class="checkbox"><input type="checkbox" id="reg-tos" checked> Согласен с условиями использования и политикой конфиденциальности</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="login-cancel">Отмена</button>
+      <button class="btn btn-primary" id="login-continue">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============= Onboarding overlay ============= -->
+<div class="overlay" id="onb-overlay">
+  <div class="modal lg">
+    <div class="modal-head">
+      <h3 class="h" id="onb-title">Расскажите немного о себе</h3>
+      <div class="h-sub" id="onb-sub">5 коротких шагов — и мы соберём для вас черновик рабочего стола.</div>
+      <div class="steps" style="margin-top:14px"><div class="step on"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div></div>
+    </div>
+    <div class="modal-body" id="onb-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="onb-back">Назад</button>
+      <button class="btn btn-primary" id="onb-next">Далее</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============= Demo state switcher ============= -->
+<div class="state-switcher" id="ss">
+  <button class="ss-toggle" id="ss-toggle" title="Свернуть/развернуть демо-панель" aria-label="Свернуть/развернуть демо-панель">
+    <svg class="icon icon-sm" id="ss-toggle-icon"><use href="#i-chev-right"/></svg>
+  </button>
+  <span class="ss-label">Демо-состояния:</span>
+  <button class="ss-btn on" data-state="dashboard">Стандартный</button>
+  <button class="ss-btn" data-state="first">Первый вход</button>
+  <button class="ss-btn" data-state="edit">Редактирование</button>
+  <button class="ss-btn" data-state="nl">Настройка текстом</button>
+  <button class="ss-btn" data-state="loading">Loading</button>
+  <button class="ss-btn" data-state="error">Error</button>
+  <button class="ss-btn" data-state="empty">Empty</button>
+  <button class="ss-btn" data-state="expired">Истёк тариф</button>
+  <button class="ss-btn" data-state="login">Регистрация</button>
+  <button class="ss-btn" data-state="onboarding">Онбординг</button>
+</div>
+
+<script>
+/* =============================================================================
+   STATE
+   ============================================================================= */
+const App = {
+  state:'dashboard',          // dashboard|first|edit|nl|loading|error|empty|expired|login|onboarding
+  leftMode:'expanded',        // expanded|collapsed|hidden
+  rightHidden:false,
+  rightPinned:true,
+  notifs:[
+    {id:1,unread:true,icon:'i-news',title:'Новые публикации по кардиологии (5)',sub:'European Heart Journal · сегодня'},
+    {id:2,unread:true,icon:'i-doc', title:'Обновлены клинрекомендации «ХСН 2026»',sub:'Версия 3.2 · вчера'},
+    {id:3,unread:true,icon:'i-mic', title:'Готова транскрибация «Конференция по эндокринологии»',sub:'12 мин аудио · готово'},
+    {id:4,unread:true,icon:'i-card',title:'Подписка Pro продлится 12.07',sub:'Списание 1 990 ₽'},
+    {id:5,unread:false,icon:'i-quiz',title:'Тест «Антикоагулянты» опубликован',sub:'2 дня назад'}
+  ],
+  notes:[
+    {text:'Спросить у Сидорова про дозу апиксабана при ХБП 3б',meta:'сегодня · ХСН'},
+    {text:'Перепроверить расчёт CHA2DS2-VASc в калькуляторе',meta:'вчера'}
+  ],
+  tasks:[
+    {text:'Дочитать «ESC Guidelines on AF management»',meta:'до пятницы',done:false},
+    {text:'Пройти квиз по гиполипидемической терапии',meta:'НМО · 1 балл',done:false},
+    {text:'Завершить курс «Антибиотикотерапия 2026»',meta:'осталось 2 модуля',done:false},
+    {text:'Продлить подписку Pro',meta:'12.07',done:true}
+  ],
+  topics:['Кардиология','Урология','Эндокринология','Антикоагулянты','Инфузионная терапия','НМО','Клинические случаи'],
+  pinnedTopics:new Set(['Кардиология']),
+  hiddenTopics:new Set(),
+  topicsHiddenOpen:false,
+  topicsCatalog:[
+    'Кардиология','Терапия','Хирургия','Педиатрия','Неврология','Психиатрия','Дерматология',
+    'Офтальмология','ЛОР','Гастроэнтерология','Эндокринология','Урология','Гинекология',
+    'Акушерство','Онкология','Гематология','Ревматология','Пульмонология','Нефрология',
+    'Инфекционные болезни','Аллергология','Анестезиология','Реаниматология','Травматология',
+    'Ортопедия','Стоматология','Фармакология','Антибиотики','Антикоагулянты',
+    'Гиполипидемическая терапия','Артериальная гипертензия','ИБС','ХСН','Аритмии',
+    'Сахарный диабет','Тиреоидология','ХОБЛ','Бронхиальная астма','Пневмония','Туберкулёз',
+    'COVID-19','Иммунология','ХБП 3б','Инфузионная терапия','Клинические случаи',
+    'Доказательная медицина','НМО','Аккредитация','Гериатрия','ЭКГ','Лабораторная диагностика'
+  ],
+  favorites:[
+    {id:'fav-news',label:'Новости',icon:'i-news'},
+    {id:'fav-cr',label:'Клинрекомендации',icon:'i-doc'},
+    {id:'fav-ohlp',label:'ОХЛП апиксабан',icon:'i-pill'},
+    {id:'fav-translate',label:'Перевод медтекстов',icon:'i-translate'},
+    {id:'fav-trainer',label:'Тренажёр по антибиотикам',icon:'i-target'}
+  ],
+  widgets:[          // {id,title,size:'s|m|l',hidden,collapsed,pinned}
+    {id:'news',title:'Персональная лента новостей',size:'l',hidden:false,collapsed:false,pinned:true},
+    {id:'qa',title:'Быстрые действия',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'topics',title:'Мои темы',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'continue',title:'Продолжить работу',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'updates',title:'Обновления клинрекомендаций и ОХЛП',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'quiz',title:'Тренажёр / квиз дня',size:'s',hidden:false,collapsed:false,pinned:false},
+    {id:'cme',title:'Курсы / НМО / аккредитация',size:'s',hidden:false,collapsed:false,pinned:false},
+    {id:'fav',title:'Избранное',size:'s',hidden:false,collapsed:false,pinned:false},
+  ],
+  newsTab:'all',
+  quizTab:'case',
+  nlHistory:[
+    'Покажи новости по кардиологии и антикоагулянтам',
+    'Убери видео, добавь ОХЛП и клинрекомендации',
+    'Закрепи перевод и транскрибацию слева'
+  ],
+  onbStep:0,
+  onbData:{role:'',template:'',services:[]}
+};
+
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const el = (html)=>{const d=document.createElement('div');d.innerHTML=html.trim();return d.firstChild};
+const esc = (s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* =============================================================================
+   RENDER MAIN (depends on state)
+   ============================================================================= */
+function renderMain(){
+  const main = $('#main');
+  main.innerHTML = '';
+
+  // global page-level state banners
+  if(App.state==='expired'){
+    main.appendChild(el(`
+      <div class="state-banner danger">
+        <svg class="icon"><use href="#i-lock"/></svg>
+        <div><b>Подписка Pro истекла 28.04.2026.</b> Часть сервисов работает в режиме ограниченного доступа.</div>
+        <div class="b-actions">
+          <button class="btn btn-sm">Обратиться в поддержку</button>
+          <button class="btn btn-sm btn-primary" id="renew-sub">Продлить доступ</button>
+        </div>
+      </div>`));
+  }
+  if(App.state==='error'){
+    main.appendChild(el(`
+      <div class="state-banner danger">
+        <svg class="icon"><use href="#i-warn"/></svg>
+        <div><b>Не удалось загрузить виджеты.</b> Проверьте соединение и повторите попытку.</div>
+        <div class="b-actions"><button class="btn btn-sm btn-primary" onclick="setState('dashboard')">Повторить</button></div>
+      </div>`));
+  }
+
+  if(App.state==='first'){ renderFirstLogin(main); return; }
+  if(App.state==='empty'){ renderEmpty(main); return; }
+
+  // Greeting
+  main.appendChild(el(`
+    <div class="greet">
+      <div>
+        <h1>Добрый день, Анна 👋</h1>
+        <div class="sub">Ваш рабочий стол настроен для кардиологии, ОХЛП и тренажёров.</div>
+      </div>
+      <div class="greet-actions">
+        <button class="btn" id="g-nl"><svg class="icon"><use href="#i-spark"/></svg>Изменить через текст</button>
+        <button class="btn" id="g-edit"><svg class="icon"><use href="#i-edit"/></svg>${App.state==='edit'?'Завершить редактирование':'Редактировать виджеты'}</button>
+        <button class="btn btn-ghost" id="g-reset"><svg class="icon"><use href="#i-reset"/></svg>Сбросить к шаблону</button>
+      </div>
+    </div>`));
+
+  // NL card
+  const nlOpen = App.state==='nl';
+  const nlCard = el(`
+    <div class="nl-card">
+      <div class="nl-row">
+        <input class="nl-input" id="nl-input"
+          placeholder="Опишите, что вы хотите видеть на главной странице"
+          value="${nlOpen?'Покажи новости по кардиологии и антикоагулянтам, убери видео':''}"/>
+        <button class="btn btn-primary" id="nl-apply"><svg class="icon"><use href="#i-spark"/></svg>Применить</button>
+        <button class="btn" id="nl-history-toggle">История</button>
+      </div>
+      <div class="nl-suggestions">
+        <span class="dd-suggestion" data-nl="Покажи новости по кардиологии и антикоагулянтам">Покажи новости по кардиологии и антикоагулянтам</span>
+        <span class="dd-suggestion" data-nl="Убери видео, добавь ОХЛП и клинрекомендации">Убери видео, добавь ОХЛП и клинрекомендации</span>
+        <span class="dd-suggestion" data-nl="Закрепи перевод и транскрибацию слева">Закрепи перевод и транскрибацию слева</span>
+        <span class="dd-suggestion" data-nl="Показывай ежедневные публикации и квизы">Показывай ежедневные публикации и квизы</span>
+      </div>
+      <div class="nl-history${nlOpen?' open':''}" id="nl-history">
+        <div class="dd-title">История запросов</div>
+        ${App.nlHistory.map(q=>`<div class="nl-history-item" data-nl="${esc(q)}"><span>${esc(q)}</span><span><svg class="icon icon-sm"><use href="#i-clock"/></svg></span></div>`).join('')}
+      </div>
+      <div class="nl-preview${nlOpen?' open':''}" id="nl-preview">
+        <div><b>Предпросмотр:</b> скрыть «Тренажёр / квиз дня» (видео-карточки), добавить «Обновления клинрекомендаций и ОХЛП», обновить ленту по темам «Кардиология», «Антикоагулянты».</div>
+        <div class="nl-preview-actions">
+          <button class="btn btn-sm btn-primary" id="nl-confirm">Применить</button>
+          <button class="btn btn-sm" id="nl-cancel">Отменить</button>
+          <button class="btn btn-sm btn-ghost" id="nl-prev"><svg class="icon icon-sm"><use href="#i-undo"/></svg>Вернуть предыдущий вариант</button>
+          <button class="btn btn-sm btn-ghost" id="nl-reset"><svg class="icon icon-sm"><use href="#i-reset"/></svg>Сбросить к шаблону</button>
+        </div>
+      </div>
+    </div>`);
+  main.appendChild(nlCard);
+
+  // Loading state — skeletons instead of widgets
+  if(App.state==='loading'){
+    const grid = el(`<div class="grid"></div>`);
+    for(let i=0;i<6;i++){
+      grid.appendChild(el(`
+        <div class="widget size-${i===0?'l':'m'}">
+          <div class="w-head"><div class="skeleton" style="width:160px"></div></div>
+          <div class="w-body skeleton-grid">
+            <div class="skeleton h"></div><div class="skeleton" style="width:60%"></div>
+            <div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:40%"></div>
+          </div>
+        </div>`));
+    }
+    main.appendChild(grid);
+    bindMainHeader();
+    return;
+  }
+
+  // widget grid
+  const grid = el(`<div class="grid" id="widget-grid"></div>`);
+  App.widgets.forEach(w=>grid.appendChild(renderWidget(w)));
+  main.appendChild(grid);
+  bindMainHeader();
+}
+
+function bindMainHeader(){
+  $('#g-nl')?.addEventListener('click',()=>{App.state='nl';renderAll();});
+  $('#g-edit')?.addEventListener('click',()=>{App.state = App.state==='edit'?'dashboard':'edit'; renderAll();});
+  $('#g-reset')?.addEventListener('click',resetWidgets);
+  $('#nl-apply')?.addEventListener('click',()=>{App.state='nl';renderAll();});
+  $('#nl-history-toggle')?.addEventListener('click',()=>$('#nl-history').classList.toggle('open'));
+  $$('#main .dd-suggestion').forEach(s=>s.addEventListener('click',()=>{
+    $('#nl-input').value = s.dataset.nl;
+    App.state='nl'; renderAll();
+  }));
+  $$('#main .nl-history-item').forEach(s=>s.addEventListener('click',()=>{
+    $('#nl-input').value = s.dataset.nl;
+    App.state='nl'; renderAll();
+  }));
+  $('#nl-confirm')?.addEventListener('click',()=>{
+    const q = $('#nl-input').value.trim();
+    if(q){ App.nlHistory.unshift(q); App.nlHistory = App.nlHistory.slice(0,6); }
+    // simulate widget rearrangement
+    const quiz = App.widgets.find(w=>w.id==='quiz'); if(quiz) quiz.hidden = true;
+    const upd  = App.widgets.find(w=>w.id==='updates'); if(upd){ upd.hidden=false; upd.size='l'; }
+    App.state='dashboard'; renderAll();
+  });
+  $('#nl-cancel')?.addEventListener('click',()=>{App.state='dashboard';renderAll();});
+  $('#nl-prev')?.addEventListener('click',()=>{App.state='dashboard';renderAll();});
+  $('#nl-reset')?.addEventListener('click',resetWidgets);
+  $('#renew-sub')?.addEventListener('click',()=>{App.state='dashboard';alert('Подписка успешно продлена (имитация)');renderAll();});
+}
+
+/* =============================================================================
+   FIRST LOGIN / EMPTY
+   ============================================================================= */
+function renderFirstLogin(main){
+  const tmpls = [
+    {id:'doc',title:'Врач-практик',sub:'Новости, клинрекомендации, ОХЛП, калькуляторы'},
+    {id:'ord',title:'Ординатор',sub:'Тренажёры, тесты, обучение, разборы случаев'},
+    {id:'medr',title:'Медпред',sub:'Препараты, обновления, дайджесты, заметки'},
+    {id:'pharm',title:'Фармспециалист',sub:'ОХЛП, взаимодействия, новости фармы'},
+    {id:'teacher',title:'Преподаватель',sub:'Курсы, тесты, материалы для лекций'}
+  ];
+  main.appendChild(el(`
+    <div class="first-login">
+      <div class="fl-greet">
+        <h2>Добро пожаловать в Акнауцер 👋</h2>
+        <p>Соберём ваш персональный рабочий стол. Выберите шаблон или опишите, что хотите видеть.</p>
+      </div>
+
+      <div class="fl-card">
+        <h3>Рекомендованные шаблоны рабочего стола</h3>
+        <div class="template-grid" id="fl-tmpls">
+          ${tmpls.map(t=>`
+            <div class="tmpl-tile" data-tmpl="${t.id}">
+              <div class="tt-title">${t.title}</div>
+              <div class="tt-sub">${t.sub}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="fl-card">
+        <h3>Или опишите своими словами</h3>
+        <div class="nl-row">
+          <input class="nl-input" id="fl-nl" placeholder="Опишите, что вы хотите видеть на главной странице"/>
+          <button class="btn btn-primary" id="fl-build"><svg class="icon"><use href="#i-spark"/></svg>Собрать мой рабочий стол</button>
+        </div>
+        <div class="nl-suggestions">
+          <span class="dd-suggestion">Я кардиолог, хочу новости по антикоагулянтам, клинрекомендации, калькуляторы и короткие тесты</span>
+          <span class="dd-suggestion">Сделай главный экран для подготовки к аккредитации</span>
+          <span class="dd-suggestion">Покажи мне 5 новостей по эндокринологии и новые ОХЛП</span>
+        </div>
+      </div>
+    </div>`));
+
+  $$('#fl-tmpls .tmpl-tile').forEach(t=>t.addEventListener('click',()=>{
+    $$('#fl-tmpls .tmpl-tile').forEach(x=>x.classList.remove('selected'));
+    t.classList.add('selected');
+  }));
+  $('#fl-build')?.addEventListener('click',()=>{App.state='dashboard';renderAll();});
+}
+
+function renderEmpty(main){
+  main.appendChild(el(`
+    <div class="greet"><div><h1>Ваш рабочий стол пока пуст</h1><div class="sub">Добавьте виджеты или вернитесь к рекомендованному шаблону.</div></div>
+    <div class="greet-actions">
+      <button class="btn btn-primary" onclick="openAddPanel()"><svg class="icon"><use href="#i-plus"/></svg>Добавить виджет</button>
+      <button class="btn" onclick="resetWidgets()"><svg class="icon"><use href="#i-reset"/></svg>Сбросить к шаблону</button>
+    </div></div>
+    <div class="empty-state">
+      <svg class="icon icon-lg" style="color:var(--text-dim)"><use href="#i-grid"/></svg>
+      <h3>Здесь будут ваши виджеты</h3>
+      <p>Соберите рабочий стол под себя — или опишите его естественным языком.</p>
+    </div>`));
+}
+
+/* =============================================================================
+   WIDGETS
+   ============================================================================= */
+function renderWidget(w){
+  const cls = ['widget','size-'+w.size];
+  if(w.hidden) cls.push('hidden');
+  if(w.collapsed) cls.push('collapsed');
+  if(w.pinned) cls.push('pinned');
+  const editMode = App.state==='edit';
+  const node = el(`<div class="${cls.join(' ')}" data-wid="${w.id}" ${editMode?'draggable="true"':''}></div>`);
+
+  if(editMode){
+    node.addEventListener('dragstart',e=>{
+      node.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', w.id);
+    });
+    node.addEventListener('dragend',()=>{
+      node.classList.remove('dragging');
+      $$('#widget-grid .widget').forEach(x=>x.classList.remove('drop-before','drop-after'));
+    });
+    node.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      const r = node.getBoundingClientRect();
+      const before = e.clientX < r.left + r.width/2;
+      node.classList.toggle('drop-before', before);
+      node.classList.toggle('drop-after', !before);
+    });
+    node.addEventListener('dragleave',()=>{
+      node.classList.remove('drop-before','drop-after');
+    });
+    node.addEventListener('drop',e=>{
+      e.preventDefault();
+      const fromId = e.dataTransfer.getData('text/plain');
+      if(!fromId || fromId===w.id){node.classList.remove('drop-before','drop-after');return;}
+      const r = node.getBoundingClientRect();
+      const before = e.clientX < r.left + r.width/2;
+      const fromIdx = App.widgets.findIndex(x=>x.id===fromId);
+      let toIdx = App.widgets.indexOf(w);
+      if(fromIdx<0 || toIdx<0) return;
+      const [moved] = App.widgets.splice(fromIdx,1);
+      // adjust toIdx if removal shifted positions
+      if(fromIdx < toIdx) toIdx--;
+      if(!before) toIdx++;
+      App.widgets.splice(toIdx,0,moved);
+      renderMain();
+    });
+  }
+
+  const head = el(`
+    <div class="w-head">
+      <div class="w-title">${w.pinned?'<svg class="icon icon-sm pin"><use href="#i-pin"/></svg>':''}${esc(w.title)}</div>
+      <div class="w-controls">
+        <div class="size-toggle w-edit-only">
+          <button class="${w.size==='s'?'on':''}" data-size="s">S</button>
+          <button class="${w.size==='m'?'on':''}" data-size="m">M</button>
+          <button class="${w.size==='l'?'on':''}" data-size="l">L</button>
+        </div>
+        <button class="w-edit-only" data-act="up" title="Выше"><svg class="icon icon-sm"><use href="#i-chev-up"/></svg></button>
+        <button class="w-edit-only" data-act="down" title="Ниже"><svg class="icon icon-sm"><use href="#i-chev-down"/></svg></button>
+        <button data-act="pin" title="Закрепить"><svg class="icon icon-sm" ${w.pinned?'style="color:var(--primary)"':''}><use href="#i-pin"/></svg></button>
+        <button data-act="collapse" title="Свернуть"><svg class="icon icon-sm"><use href="#i-collapse"/></svg></button>
+        <button data-act="hide" title="Скрыть"><svg class="icon icon-sm"><use href="#i-eye-off"/></svg></button>
+        <button data-act="config" title="Настроить"><svg class="icon icon-sm"><use href="#i-settings"/></svg></button>
+        <button data-act="remove" title="Удалить"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button>
+      </div>
+    </div>`);
+  node.appendChild(head);
+
+  const body = el(`<div class="w-body"></div>`);
+  body.innerHTML = renderWidgetBody(w);
+  node.appendChild(body);
+
+  // Bind controls (scope to w-head only — body uses data-act for its own widgets)
+  node.querySelectorAll('.w-head .w-controls [data-act]').forEach(b=>{
+    b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const act = b.dataset.act;
+      if(act==='hide'){w.hidden=true}
+      else if(act==='collapse'){w.collapsed=!w.collapsed}
+      else if(act==='pin'){w.pinned=!w.pinned}
+      else if(act==='remove'){App.widgets = App.widgets.filter(x=>x.id!==w.id)}
+      else if(act==='config'){alert('Настройки виджета «'+w.title+'» (демо)')}
+      else if(act==='up'||act==='down'){
+        const i = App.widgets.indexOf(w);
+        const j = act==='up'?i-1:i+1;
+        if(j>=0 && j<App.widgets.length){
+          [App.widgets[i],App.widgets[j]] = [App.widgets[j],App.widgets[i]];
+        }
+      }
+      renderMain();
+    });
+  });
+  node.querySelectorAll('.w-head .w-controls [data-size]').forEach(b=>{
+    b.addEventListener('click',(e)=>{e.stopPropagation();w.size=b.dataset.size;renderMain();});
+  });
+
+  // Per-widget extra wiring
+  if(w.id==='news'){
+    node.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+      App.newsTab=t.dataset.tab; renderMain();
+    }));
+  }
+  if(w.id==='topics'){
+    const inp = node.querySelector('.topic-input');
+    const btn = node.querySelector('.topic-add button');
+    const dd  = node.querySelector('[data-suggest]');
+    let activeIdx = -1;
+    let currentMatches = [];
+
+    const addTopic = (val)=>{
+      const v = String(val||'').trim();
+      if(!v) return;
+      if(!App.topics.some(t=>t.toLowerCase()===v.toLowerCase())) App.topics.push(v);
+      inp.value=''; renderMain();
+    };
+
+    const renderDD = ()=>{
+      const q = inp.value.trim().toLowerCase();
+      const taken = new Set(App.topics.map(t=>t.toLowerCase()));
+      const pool = App.topicsCatalog.filter(t=>!taken.has(t.toLowerCase()));
+      currentMatches = q
+        ? pool.filter(t=>t.toLowerCase().includes(q)).slice(0,8)
+        : pool.slice(0,8);
+      activeIdx = currentMatches.length ? 0 : -1;
+
+      const exactExists = currentMatches.some(t=>t.toLowerCase()===q) || taken.has(q);
+      let html = `<div class="topic-suggest-title">${q?'Подсказки':'Популярные темы'}</div>`;
+      if(currentMatches.length===0 && !q){
+        html += `<div class="topic-suggest-empty">Все популярные темы уже добавлены</div>`;
+      } else if(currentMatches.length===0){
+        html += `<div class="topic-suggest-empty">Совпадений нет</div>`;
+      } else {
+        html += currentMatches.map((t,i)=>{
+          const hl = q ? esc(t).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<b>$1</b>') : esc(t);
+          return `<div class="topic-suggest-item${i===0?' active':''}" data-i="${i}"><svg class="icon icon-sm ts-mark"><use href="#i-bookmark"/></svg><span>${hl}</span><span class="plus">+</span></div>`;
+        }).join('');
+      }
+      if(q && !exactExists){
+        html += `<div class="topic-suggest-create" data-create><svg class="icon icon-sm"><use href="#i-plus"/></svg>Добавить «${esc(inp.value.trim())}» как новую тему</div>`;
+      }
+      dd.innerHTML = html;
+      dd.classList.add('open');
+
+      dd.querySelectorAll('.topic-suggest-item').forEach(it=>{
+        it.addEventListener('mousedown',e=>e.preventDefault());
+        it.addEventListener('click',()=>addTopic(currentMatches[parseInt(it.dataset.i,10)]));
+      });
+      const createBtn = dd.querySelector('[data-create]');
+      if(createBtn){
+        createBtn.addEventListener('mousedown',e=>e.preventDefault());
+        createBtn.addEventListener('click',()=>addTopic(inp.value));
+      }
+    };
+
+    const closeDD = ()=>dd.classList.remove('open');
+    const setActive = (idx)=>{
+      activeIdx = idx;
+      dd.querySelectorAll('.topic-suggest-item').forEach((el,i)=>el.classList.toggle('active',i===idx));
+      const a = dd.querySelector('.topic-suggest-item.active');
+      if(a) a.scrollIntoView({block:'nearest'});
+    };
+
+    inp.addEventListener('focus',renderDD);
+    inp.addEventListener('input',renderDD);
+    inp.addEventListener('blur',()=>setTimeout(closeDD,120));
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='ArrowDown'){e.preventDefault();if(currentMatches.length)setActive((activeIdx+1)%currentMatches.length);}
+      else if(e.key==='ArrowUp'){e.preventDefault();if(currentMatches.length)setActive((activeIdx-1+currentMatches.length)%currentMatches.length);}
+      else if(e.key==='Enter'){
+        e.preventDefault();
+        if(activeIdx>=0 && currentMatches[activeIdx]) addTopic(currentMatches[activeIdx]);
+        else if(inp.value.trim()) addTopic(inp.value);
+      } else if(e.key==='Escape'){ closeDD(); }
+    });
+    btn.addEventListener('click',()=>{
+      if(activeIdx>=0 && currentMatches[activeIdx] && inp.value.trim()==='') addTopic(currentMatches[activeIdx]);
+      else addTopic(inp.value);
+    });
+
+    node.querySelectorAll('.topic [data-act]').forEach(b=>b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const chip = b.closest('.topic');
+      const t = chip.dataset.topic;
+      const act = b.dataset.act;
+      if(act==='pin'){
+        if(App.pinnedTopics.has(t)) App.pinnedTopics.delete(t);
+        else App.pinnedTopics.add(t);
+      } else if(act==='hide'){
+        App.hiddenTopics.add(t);
+        App.pinnedTopics.delete(t);
+      } else if(act==='restore'){
+        App.hiddenTopics.delete(t);
+      } else if(act==='remove'){
+        App.topics = App.topics.filter(y=>y!==t);
+        App.pinnedTopics.delete(t);
+        App.hiddenTopics.delete(t);
+      } else if(act==='open'){
+        alert('Открыть тему: «'+t+'» (демо: лента и материалы по теме)');
+        return;
+      }
+      renderMain();
+    }));
+    const hiddenToggle = node.querySelector('[data-hidden-toggle]');
+    if(hiddenToggle) hiddenToggle.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      App.topicsHiddenOpen = !App.topicsHiddenOpen;
+      node.querySelector('[data-hidden]').classList.toggle('open', App.topicsHiddenOpen);
+    });
+  }
+  if(w.id==='quiz'){
+    node.querySelectorAll('[data-qtab]').forEach(t=>t.addEventListener('click',()=>{
+      App.quizTab = t.dataset.qtab;
+      renderMain();
+    }));
+    node.querySelectorAll('.quiz-opt').forEach(o=>o.addEventListener('click',()=>{
+      node.querySelectorAll('.quiz-opt').forEach(x=>x.classList.remove('correct','wrong'));
+      o.classList.add(o.dataset.correct==='1'?'correct':'wrong');
+    }));
+  }
+
+  return node;
+}
+
+const PREMIUM_WIDGETS = new Set(['updates','quiz','cme','news']);
+const LOCK_INFO = {
+  updates:'Обновления клинрекомендаций и сигналы безопасности доступны в тарифе Pro.',
+  quiz:'Ежедневные тренажёры и квизы — функция тарифа Pro.',
+  cme:'Подсчёт ЗЕТ, дедлайны НМО и аккредитация — функция тарифа Pro.',
+  news:'Расширенная лента (PubMed, обновления клинрек) — функция тарифа Pro.'
+};
+function renderLock(w){
+  return `
+    <div class="lock-state">
+      <span class="lock-ico"><svg class="icon"><use href="#i-lock"/></svg></span>
+      <h4>Раздел временно недоступен</h4>
+      <p>${LOCK_INFO[w.id]||'Сервис недоступен в текущем тарифе.'} Подписка Pro истекла 28.04.2026.</p>
+      <div class="lock-cta">
+        <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-card"/></svg> Продлить доступ</button>
+        <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Подключить сервис</button>
+        <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-help"/></svg> Обратиться в поддержку</button>
+      </div>
+    </div>`;
+}
+function renderWidgetBody(w){
+  if(App.state==='expired' && PREMIUM_WIDGETS.has(w.id)) return renderLock(w);
+  switch(w.id){
+    case 'news': return renderNews();
+    case 'qa':   return renderQA();
+    case 'topics': return renderTopics();
+    case 'continue': return renderContinue();
+    case 'updates': return renderUpdates();
+    case 'quiz': return renderQuiz();
+    case 'cme':  return renderCME();
+    case 'fav':  return renderFavWidget();
+    default: return '';
+  }
+}
+
+function renderNews(){
+  const tabs = [
+    ['all','Все'],['spec','По специальности'],['cr','Клинрекомендации'],
+    ['ohlp','ОХЛП'],['pubmed','PubMed'],['video','Видео']
+  ];
+  const all = [
+    {tab:'spec',src:'European Heart Journal',date:'сегодня',tags:['Кардиология','ХСН'],
+     title:'Новый алгоритм терапии ХСН с сохранённой ФВ — рекомендации ESC 2026',
+     ex:'ESC опубликовал обновлённые алгоритмы лечения ХСН с сохранённой фракцией выброса. Изменены классы рекомендаций для SGLT2.'},
+    {tab:'cr',src:'Минздрав РФ',date:'вчера',tags:['Клинрекомендации','Антикоагулянты'],
+     title:'Обновление клинрекомендаций по фибрилляции предсердий, версия 3.2',
+     ex:'Расширены показания к прямым оральным антикоагулянтам, скорректированы дозы для пациентов с ХБП 3б.'},
+    {tab:'ohlp',src:'ГРЛС',date:'2 дня назад',tags:['ОХЛП','Сигнал безопасности'],
+     title:'Изменения в инструкции к препарату Апиксабан',
+     ex:'Расширены ограничения по применению при сочетании с сильными ингибиторами CYP3A4 и P-gp.'},
+    {tab:'pubmed',src:'PubMed',date:'3 дня назад',tags:['Антикоагулянты','Мета-анализ'],
+     title:'DOAC vs warfarin in elderly patients: systematic review',
+     ex:'Систематический обзор 24 РКИ по сравнению прямых оральных антикоагулянтов и варфарина у пожилых пациентов.'},
+    {tab:'video',src:'Конгресс кардиологов',date:'неделя',tags:['Видео','Лекция'],
+     title:'Лекция: «Антикоагулянты в практике терапевта 2026»',
+     ex:'52 минуты видео с экспертным разбором клинических случаев. Есть автоматическая транскрибация.'}
+  ];
+  const items = App.newsTab==='all' ? all : all.filter(n=>n.tab===App.newsTab);
+  return `
+    <div class="tabs">
+      ${tabs.map(([id,l])=>`<div class="tab ${App.newsTab===id?'active':''}" data-tab="${id}">${l}</div>`).join('')}
+    </div>
+    <div class="news-list">
+      ${items.length===0
+        ? `<div class="empty-state" style="padding:18px"><h3 style="font-size:14px">Пока нет материалов по выбранной теме</h3><p>Измените настройки ленты или подключите источники.</p><button class="btn btn-sm btn-primary">Изменить настройки</button></div>`
+        : items.map(n=>`
+          <div class="news-item">
+            <div class="news-meta"><span class="tag src">${esc(n.src)}</span><span>${esc(n.date)}</span>${n.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+            <div class="news-title">${esc(n.title)}</div>
+            <div class="news-excerpt">${esc(n.ex)}</div>
+            <div class="news-actions">
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-eye"/></svg> Открыть</button>
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-bookmark"/></svg> Сохранить</button>
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-megaphone"/></svg> Сделать пост</button>
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-translate"/></svg> Перевести</button>
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-quiz"/></svg> Создать тест</button>
+              <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-share"/></svg> Отправить</button>
+            </div>
+          </div>`).join('')
+      }
+    </div>`;
+}
+
+function renderQA(){
+  const items = [
+    ['Найти клинрекомендацию','i-doc'],['Найти ОХЛП','i-pill'],
+    ['Проверить взаимодействия','i-mix'],['Перевести текст','i-translate'],
+    ['Загрузить видео','i-mic'],['Создать тест','i-quiz'],
+    ['Открыть тренажёр','i-target'],['Создать подборку','i-bookmark']
+  ];
+  return `<div class="qa-grid">
+    ${items.map(([l,i])=>`<button class="qa-btn" onclick="alert('${l} (демо)')"><svg class="icon"><use href="#${i}"/></svg>${l}</button>`).join('')}
+  </div>`;
+}
+
+function renderTopics(){
+  const visible = App.topics.filter(t=>!App.hiddenTopics.has(t));
+  visible.sort((a,b)=>{
+    const ap = App.pinnedTopics.has(a)?0:1;
+    const bp = App.pinnedTopics.has(b)?0:1;
+    return ap-bp;
+  });
+  const hidden = App.topics.filter(t=>App.hiddenTopics.has(t));
+  const chip = (t,inHidden=false)=>{
+    const pinned = App.pinnedTopics.has(t);
+    return `<span class="topic ${pinned?'pinned':''}" data-topic="${esc(t)}">
+      <button class="t-btn t-pin" data-act="pin" title="${pinned?'Открепить':'Закрепить выше'}"><svg class="icon icon-sm"><use href="#i-pin"/></svg></button>
+      <span class="t-label" data-act="open">${esc(t)}</span>
+      <span class="t-tools">
+        ${inHidden
+          ? `<button class="t-btn" data-act="restore" title="Вернуть"><svg class="icon icon-sm"><use href="#i-eye"/></svg></button>`
+          : `<button class="t-btn t-hide" data-act="hide" title="Скрыть"><svg class="icon icon-sm"><use href="#i-eye-off"/></svg></button>`}
+        <button class="t-btn t-remove" data-act="remove" title="Удалить"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+      </span>
+    </span>`;
+  };
+  return `
+    <div class="topics">${visible.map(t=>chip(t,false)).join('')}</div>
+    ${hidden.length ? `
+      <div class="topics-hidden ${App.topicsHiddenOpen?'open':''}" data-hidden>
+        <div class="topics-hidden-head" data-hidden-toggle>
+          Скрытые темы (${hidden.length})
+          <svg class="icon icon-sm chev"><use href="#i-chev-down"/></svg>
+        </div>
+        <div class="topics-hidden-list">${hidden.map(t=>chip(t,true)).join('')}</div>
+      </div>` : ''
+    }
+    <div class="topic-add">
+      <input class="topic-input" placeholder="Добавить тему: например, антикоагулянты" autocomplete="off"/>
+      <button class="btn btn-sm btn-primary">+</button>
+      <div class="topic-suggest" data-suggest></div>
+    </div>`;
+}
+
+function renderContinue(){
+  const items = [
+    ['Перевод abstract «Heart Failure 2025»','готов на 60% · вернуться к тексту','i-translate'],
+    ['Транскрибация «Лекция по ХСН»','осталось 3 мин обработки','i-mic'],
+    ['Тест по ингибиторам АПФ','5 из 12 вопросов','i-quiz'],
+    ['Статья «DOAC у пожилых»','прочитать позже · 12 мин','i-doc'],
+    ['Калькулятор CHA2DS2-VASc','последний расчёт сегодня','i-calc']
+  ];
+  return `<div class="continue-list">
+    ${items.map(([t,s,i])=>`<div class="continue-item">
+      <span class="ci-icon"><svg class="icon icon-sm"><use href="#${i}"/></svg></span>
+      <div><div class="ci-title">${t}</div><div class="ci-sub">${s}</div></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderUpdates(){
+  const u = [
+    ['ХСН с сохранённой ФВ — версия 3.2','Минздрав РФ · вчера','accent'],
+    ['ОХЛП Апиксабан — обновление противопоказаний','ГРЛС · 2 дня','warn'],
+    ['Сигнал безопасности: Метформин при остром повреждении почек','Roszdravnadzor','danger'],
+    ['Расширены показания: Эмпаглифлозин при ХБП','EMA · неделя','accent']
+  ];
+  return `<div>
+    ${u.map(([t,s,c])=>`
+      <div class="update-item">
+        <div class="update-marker ${c}"></div>
+        <div class="update-body">
+          <div class="update-title">${t}</div>
+          <div class="update-sub">${s}</div>
+          <div class="news-actions">
+            <button class="chip-btn">Открыть</button>
+            <button class="chip-btn">Сравнить</button>
+            <button class="chip-btn">В подборку</button>
+            <button class="chip-btn">Отправить</button>
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function renderQuiz(){
+  const tabs = [['case','Кейс'],['quiz','Квиз'],['drug','Препарат']];
+  let body = '';
+  if(App.quizTab==='case'){
+    body = `
+      <div class="quiz-card">
+        <div class="news-meta" style="margin-bottom:6px"><span class="tag src">Клинический случай</span><span class="tag">Кардиология</span></div>
+        <div class="quiz-q">Женщина 68 лет, ФП + ХБП 3б (СКФ 32), приём апиксабана 5 мг ×2.</div>
+        <div class="news-excerpt" style="margin:0 0 8px">Жалобы на десневые кровотечения. Hb 108 г/л. Что приоритетно: коррекция дозы, переход на варфарин или поиск источника кровопотери?</div>
+        <div class="news-actions">
+          <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-eye"/></svg> Открыть кейс</button>
+          <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-bookmark"/></svg> Сохранить</button>
+        </div>
+      </div>`;
+  } else if(App.quizTab==='quiz'){
+    body = `
+      <div class="quiz-card">
+        <div class="quiz-q">У пациента 78 лет с фибрилляцией предсердий и СКФ 28 мл/мин. Какой DOAC предпочтителен?</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" data-correct="0">Ривароксабан 20 мг</div>
+          <div class="quiz-opt" data-correct="1">Апиксабан 2.5 мг 2 раза/сут</div>
+          <div class="quiz-opt" data-correct="0">Дабигатран 150 мг 2 раза/сут</div>
+        </div>
+      </div>`;
+  } else {
+    body = `
+      <div class="quiz-card">
+        <div class="news-meta" style="margin-bottom:6px"><span class="tag src">Карточка препарата</span><span class="tag">МНН</span></div>
+        <div class="quiz-q">Апиксабан · прямой ингибитор Xa</div>
+        <div class="news-excerpt" style="margin:0 0 8px">
+          Стандарт: 5 мг ×2/сут. При ХБП 3б, возрасте ≥80 или массе ≤60 кг — 2.5 мг ×2.
+          Противопоказан при сильных ингибиторах CYP3A4 + P-gp.
+        </div>
+        <div class="news-actions">
+          <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-pill"/></svg> Открыть ОХЛП</button>
+          <button class="chip-btn"><svg class="icon icon-sm"><use href="#i-mix"/></svg> Взаимодействия</button>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="tabs">
+      ${tabs.map(([id,l])=>`<div class="tab ${App.quizTab===id?'active':''}" data-qtab="${id}">${l}</div>`).join('')}
+    </div>
+    ${body}
+    <button class="btn btn-sm btn-primary" style="width:100%;justify-content:center">Продолжить обучение</button>`;
+}
+
+function renderCME(){
+  const items = [
+    ['Антибиотикотерапия 2026','осталось 2 модуля · 1 ЗЕТ',60],
+    ['ХСН: современные подходы','начать курс · 2 ЗЕТ',0],
+    ['Интенсивная терапия','завершено 04.04.2026',100]
+  ];
+  return `<div>
+    ${items.map(([t,s,p])=>`
+      <div class="cme-row">
+        <div class="cme-progress" style="--p:${p}"><span>${p}%</span></div>
+        <div class="cme-meta"><div class="ci-title">${t}</div><div class="ci-sub">${s}</div></div>
+      </div>`).join('')}
+    <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:8px">Перейти в раздел обучения</button>
+  </div>`;
+}
+
+function renderFavWidget(){
+  const items = [
+    ['Статья: «Antithrombotic therapy 2025»','i-doc'],
+    ['Препарат: Апиксабан','i-pill'],
+    ['Клинрек.: ХСН 2026','i-doc'],
+    ['Калькулятор CHA2DS2-VASc','i-calc']
+  ];
+  return `<div class="fav-list">
+    ${items.map(([t,i])=>`<div class="fav-card"><svg class="icon icon-sm"><use href="#${i}"/></svg>${t}</div>`).join('')}
+  </div>`;
+}
+
+/* =============================================================================
+   FAVORITES (sidebar)
+   ============================================================================= */
+function renderFavorites(){
+  const c = $('#favorites-list'); c.innerHTML='';
+  App.favorites.forEach((f,i)=>{
+    const row = el(`
+      <div class="fav-item" data-tip="${esc(f.label)}" data-i="${i}" draggable="true">
+        <span class="grip" title="Перетащить"><svg class="icon icon-sm"><use href="#i-grip"/></svg></span>
+        <svg class="icon icon-sm" style="color:var(--text-muted)"><use href="#${f.icon}"/></svg>
+        <span class="lbl">${esc(f.label)}</span>
+        <span class="fav-tools">
+          <button data-mv="up" title="Выше"><svg class="icon icon-sm"><use href="#i-chev-up"/></svg></button>
+          <button data-mv="down" title="Ниже"><svg class="icon icon-sm"><use href="#i-chev-down"/></svg></button>
+          <button data-mv="rm" title="Удалить"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+        </span>
+      </div>`);
+    row.querySelectorAll('[data-mv]').forEach(b=>b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const m = b.dataset.mv;
+      if(m==='up'&&i>0){[App.favorites[i],App.favorites[i-1]]=[App.favorites[i-1],App.favorites[i]];}
+      else if(m==='down'&&i<App.favorites.length-1){[App.favorites[i],App.favorites[i+1]]=[App.favorites[i+1],App.favorites[i]];}
+      else if(m==='rm'){App.favorites.splice(i,1);}
+      renderFavorites();
+    }));
+
+    row.addEventListener('dragstart',e=>{
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', String(i));
+    });
+    row.addEventListener('dragend',()=>{
+      row.classList.remove('dragging');
+      $$('#favorites-list .fav-item').forEach(x=>x.classList.remove('drop-above','drop-below'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      const r = row.getBoundingClientRect();
+      const above = e.clientY < r.top + r.height/2;
+      row.classList.toggle('drop-above', above);
+      row.classList.toggle('drop-below', !above);
+    });
+    row.addEventListener('dragleave',()=>{
+      row.classList.remove('drop-above','drop-below');
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData('text/plain'),10);
+      const r = row.getBoundingClientRect();
+      const above = e.clientY < r.top + r.height/2;
+      let to = above ? i : i+1;
+      if(isNaN(from) || from===i) return;
+      const [moved] = App.favorites.splice(from,1);
+      if(from < to) to--;
+      App.favorites.splice(to,0,moved);
+      renderFavorites();
+    });
+
+    c.appendChild(row);
+  });
+}
+
+/* =============================================================================
+   RIGHT SIDEBAR
+   ============================================================================= */
+function renderRight(){
+  // notifications
+  const list = $('#r-notif-list'); list.innerHTML='';
+  App.notifs.slice(0,4).forEach(n=>{
+    list.appendChild(el(`<div class="r-row">
+      <svg class="icon icon-sm" style="color:${n.unread?'var(--primary)':'var(--text-dim)'};margin-top:1px"><use href="#${n.icon}"/></svg>
+      <div><div${n.unread?' style="font-weight:600"':''}>${esc(n.title)}</div><div class="r-time">${esc(n.sub)}</div></div>
+    </div>`));
+  });
+  $('#r-notif-count').textContent = App.notifs.filter(n=>n.unread).length;
+
+  // notes
+  const nl = $('#notes-list'); nl.innerHTML='';
+  App.notes.forEach((n,i)=>{
+    const row = el(`<div class="r-note"><div>${esc(n.text)}</div><div class="r-note-meta">${esc(n.meta)} · <a style="color:var(--text-muted);cursor:pointer" data-rm="${i}">удалить</a></div></div>`);
+    row.querySelector('[data-rm]').addEventListener('click',()=>{App.notes.splice(i,1);renderRight();});
+    nl.appendChild(row);
+  });
+  $('#r-notes-count').textContent = App.notes.length;
+
+  // tasks
+  const tl = $('#tasks-list'); tl.innerHTML='';
+  App.tasks.forEach((t,i)=>{
+    const row = el(`<div class="r-task ${t.done?'done':''}">
+      <input type="checkbox" ${t.done?'checked':''}/>
+      <div><div class="r-task-text">${esc(t.text)}</div><div class="r-task-meta">${esc(t.meta)}</div></div>
+    </div>`);
+    row.querySelector('input').addEventListener('change',e=>{App.tasks[i].done=e.target.checked;renderRight();});
+    tl.appendChild(row);
+  });
+  $('#r-task-count').textContent = App.tasks.filter(t=>!t.done).length;
+
+  // notification badge in header
+  $('#notif-badge').textContent = App.notifs.filter(n=>n.unread).length;
+  $('#notif-badge').style.display = App.notifs.some(n=>n.unread)?'inline-flex':'none';
+}
+
+function renderNotifPopover(){
+  const c = $('#notif-list'); c.innerHTML='';
+  App.notifs.forEach(n=>{
+    const row = el(`<div class="pop-row${n.unread?' unread':''}">
+      <span class="pop-icon"><svg class="icon icon-sm"><use href="#${n.icon}"/></svg></span>
+      <div><div class="pop-title">${esc(n.title)}</div><div class="pop-sub">${esc(n.sub)}</div></div>
+    </div>`);
+    row.addEventListener('click',()=>{n.unread=false;renderNotifPopover();renderRight();});
+    c.appendChild(row);
+  });
+}
+
+/* =============================================================================
+   APP CLASS / SIDEBARS
+   ============================================================================= */
+function renderApp(){
+  const app = $('#app');
+  app.classList.remove('left-collapsed','left-hidden','right-hidden','right-floating','edit-mode');
+  if(App.leftMode==='collapsed') app.classList.add('left-collapsed');
+  if(App.leftMode==='hidden')    app.classList.add('left-hidden');
+  if(App.rightHidden)            app.classList.add('right-hidden');
+  if(!App.rightPinned)           app.classList.add('right-floating');
+  if(App.state==='edit')         app.classList.add('edit-mode');
+
+  // header right-toggle visual: active when panel is visible
+  const togBtn = $('#btn-toggle-right');
+  if(togBtn) togBtn.classList.toggle('active', !App.rightHidden);
+
+  // pin button visual
+  const pinBtn = $('#btn-pin-right');
+  if(pinBtn){
+    pinBtn.classList.toggle('pinned', App.rightPinned);
+    pinBtn.title = App.rightPinned?'Открепить (плавающая панель)':'Закрепить (вернуть в layout)';
+    $('#pin-right-icon').setAttribute('href','#'+(App.rightPinned?'i-pin':'i-pin-off'));
+    // sprite use href update needs the inner <use> to change too
+    const useEl = $('#pin-right-icon').querySelector('use');
+    if(useEl) useEl.setAttribute('href','#'+(App.rightPinned?'i-pin':'i-pin-off'));
+  }
+
+  // Subscription state for expired
+  if(App.state==='expired'){
+    $('#tariff-pill').style.background='linear-gradient(120deg,#fdecea,#fbd9d2)';
+    $('#tariff-pill').style.color='var(--danger)';
+    $('#tariff-pill').style.borderColor='#f5a499';
+    $('#tariff-label').textContent='Тариф истёк';
+    $('#sub-status').textContent='Истёк 28.04.2026 — продлите доступ';
+  } else {
+    $('#tariff-pill').style.background='';
+    $('#tariff-pill').style.color='';
+    $('#tariff-pill').style.borderColor='';
+    $('#tariff-label').textContent='Pro · до 12.07';
+    $('#sub-status').textContent='Активен до 12.07.2026 · автопродление включено';
+  }
+}
+
+let _prevState = null;
+function renderAll(){
+  if(App.state==='edit' && _prevState!=='edit') openAddPanel();
+  else if(App.state!=='edit' && _prevState==='edit') $('#add-panel').classList.remove('open');
+  _prevState = App.state;
+
+  renderApp();
+  renderMain();
+  renderRight();
+  renderFavorites();
+  renderNotifPopover();
+  // sync state switcher
+  $$('#ss .ss-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.state===App.state || (b.dataset.state==='dashboard' && ['dashboard','edit','nl','loading','error','empty','expired'].includes(App.state) && App.state==='dashboard'));
+  });
+  // direct sync (more accurate)
+  $$('#ss .ss-btn').forEach(b=>b.classList.toggle('on', b.dataset.state===App.state));
+}
+
+function setState(s){
+  if(s==='login'){ openLogin(); return; }
+  if(s==='onboarding'){ openOnboarding(); return; }
+  App.state = s;
+  if(s==='loading'){ setTimeout(()=>{ if(App.state==='loading'){ App.state='dashboard'; renderAll(); } }, 1800); }
+  renderAll();
+}
+
+function resetWidgets(){
+  App.widgets = [
+    {id:'news',title:'Персональная лента новостей',size:'l',hidden:false,collapsed:false,pinned:true},
+    {id:'qa',title:'Быстрые действия',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'topics',title:'Мои темы',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'continue',title:'Продолжить работу',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'updates',title:'Обновления клинрекомендаций и ОХЛП',size:'m',hidden:false,collapsed:false,pinned:false},
+    {id:'quiz',title:'Тренажёр / квиз дня',size:'s',hidden:false,collapsed:false,pinned:false},
+    {id:'cme',title:'Курсы / НМО / аккредитация',size:'s',hidden:false,collapsed:false,pinned:false},
+    {id:'fav',title:'Избранное',size:'s',hidden:false,collapsed:false,pinned:false},
+  ];
+  App.state='dashboard';
+  renderAll();
+}
+
+/* =============================================================================
+   SEARCH / POPOVERS
+   ============================================================================= */
+function closeAllPopovers(except){
+  $$('.popover.open').forEach(p=>{ if(p.id!==except) p.classList.remove('open'); });
+  if(except!=='search-box') $('#search-box').classList.remove('open');
+}
+function togglePop(id){
+  const p = $('#'+id);
+  const isOpen = p.classList.contains('open');
+  closeAllPopovers(isOpen?null:id);
+  p.classList.toggle('open', !isOpen);
+}
+
+function bindHeader(){
+  $('#btn-toggle-left').addEventListener('click',()=>{
+    App.leftMode = App.leftMode==='expanded' ? 'collapsed' : (App.leftMode==='collapsed' ? 'hidden' : 'expanded');
+    renderApp();
+  });
+  $('#btn-mobile-left').addEventListener('click',()=>$('#app').classList.toggle('mobile-left-open'));
+  $('#btn-mobile-right').addEventListener('click',()=>$('#app').classList.toggle('mobile-right-open'));
+  $('#btn-toggle-right').addEventListener('click',()=>{
+    App.rightHidden = !App.rightHidden;
+    renderApp();
+  });
+  $('#right-edge-tab').addEventListener('click',()=>{
+    App.rightHidden = false;
+    renderApp();
+  });
+  $('#btn-hide-right').addEventListener('click',()=>{
+    App.rightHidden = true;
+    renderApp();
+  });
+  $('#btn-pin-right').addEventListener('click',()=>{
+    App.rightPinned = !App.rightPinned;
+    renderApp();
+  });
+
+  $('#btn-customize').addEventListener('click',()=>{App.state='nl';renderAll();});
+  $('#btn-add-widget').addEventListener('click',openAddPanel);
+  $('#btn-create').addEventListener('click',(e)=>{e.stopPropagation();togglePop('pop-create');});
+  $('#btn-notifs').addEventListener('click',(e)=>{e.stopPropagation();togglePop('pop-notifs');});
+  $('#btn-tasks').addEventListener('click',(e)=>{e.stopPropagation();togglePop('pop-tasks');});
+  $('#btn-profile').addEventListener('click',(e)=>{e.stopPropagation();togglePop('pop-profile');});
+  $('#mark-read').addEventListener('click',()=>{App.notifs.forEach(n=>n.unread=false);renderNotifPopover();renderRight();});
+  $('#open-login').addEventListener('click',openLogin);
+  $('#open-onboarding').addEventListener('click',openOnboarding);
+
+  $$('#pop-create [data-create]').forEach(a=>a.addEventListener('click',()=>{
+    closeAllPopovers();alert('Создать: '+a.dataset.create+' (демо)');
+  }));
+  $$('[data-close-pop]').forEach(b=>b.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    $('#'+b.dataset.closePop).classList.remove('open');
+  }));
+
+  // SEARCH
+  const sb = $('#search-box');
+  $('#search-input').addEventListener('focus',()=>{sb.classList.add('open');closeAllPopovers('search-box');});
+  $('#search-input').addEventListener('input',renderSearchResults);
+  $$('#search-dd .dd-suggestion').forEach(s=>s.addEventListener('click',()=>{
+    $('#search-input').value=s.dataset.q;renderSearchResults();
+  }));
+  $$('#search-dd .dd-row').forEach(r=>r.addEventListener('click',()=>{
+    sb.classList.remove('open');
+    const a=r.dataset.action;
+    if(a==='open-create')togglePop('pop-create');
+    else alert(a+' (демо)');
+  }));
+
+  // global click closes popovers/search
+  document.addEventListener('click',(e)=>{
+    const insideTrigger = e.target.closest('.popover')||e.target.closest('.icon-btn')||e.target.closest('.btn-primary')||e.target.closest('.avatar')||e.target.closest('.search');
+    if(!insideTrigger) closeAllPopovers();
+    if(!e.target.closest('.search')) sb.classList.remove('open');
+  });
+
+  // sub manage
+  $('#sub-manage').addEventListener('click',()=>alert('Управление подпиской (демо)'));
+
+  // tariff click toggles expired in demo
+  $('#tariff-pill').addEventListener('click',()=>{
+    setState(App.state==='expired'?'dashboard':'expired');
+  });
+}
+
+function renderSearchResults(){
+  const q = $('#search-input').value.trim().toLowerCase();
+  const r = $('#search-results'); r.innerHTML='';
+  if(!q) return;
+  const corpus = [
+    {cat:'Сервис',label:'Перевод медтекстов',meta:'сервис',icon:'i-translate'},
+    {cat:'Сервис',label:'Транскрибация видео',meta:'сервис',icon:'i-mic'},
+    {cat:'Сервис',label:'Калькулятор CHA2DS2-VASc',meta:'калькулятор',icon:'i-calc'},
+    {cat:'Сервис',label:'Тренажёр по антибиотикам',meta:'тренажёр',icon:'i-target'},
+    {cat:'Новость',label:'Обновлены клинрекомендации ХСН 2026',meta:'вчера',icon:'i-news'},
+    {cat:'Клинрекомендация',label:'Фибрилляция предсердий v3.2',meta:'Минздрав РФ',icon:'i-doc'},
+    {cat:'ОХЛП',label:'Апиксабан — инструкция',meta:'ГРЛС',icon:'i-pill'},
+    {cat:'Задача',label:'Дочитать «ESC AF Guidelines»',meta:'до пятницы',icon:'i-clock'}
+  ];
+  const groups = {};
+  corpus.filter(x=>x.label.toLowerCase().includes(q) || q.split(' ').some(w=>x.label.toLowerCase().includes(w))).forEach(x=>{
+    (groups[x.cat]=groups[x.cat]||[]).push(x);
+  });
+  if(Object.keys(groups).length===0){
+    r.innerHTML = `<div class="dd-section"><div class="dd-title">Ничего не найдено</div><div style="padding:6px 4px;color:var(--text-muted);font-size:13px">Попробуйте: «ОХЛП апиксабан», «новости по кардиологии», «создать тест»</div></div>`;
+    return;
+  }
+  Object.entries(groups).forEach(([cat,items])=>{
+    const sec = el(`<div class="dd-section"><div class="dd-title">${cat}</div></div>`);
+    items.forEach(it=>{
+      sec.appendChild(el(`<div class="dd-row"><svg class="icon icon-sm"><use href="#${it.icon}"/></svg>${esc(it.label)}<span class="dd-meta">${esc(it.meta)}</span></div>`));
+    });
+    r.appendChild(sec);
+  });
+}
+
+/* =============================================================================
+   ADD WIDGET PANEL
+   ============================================================================= */
+function openAddPanel(){
+  const panel = $('#add-panel'); panel.classList.add('open');
+  const body = $('#add-panel-body'); body.innerHTML='';
+  const catalog = [
+    {id:'news',title:'Персональная лента новостей',sub:'Новости по специальности и темам',icon:'i-news',size:'l'},
+    {id:'qa',title:'Быстрые действия',sub:'Action hub: 8 ключевых сервисов',icon:'i-spark',size:'m'},
+    {id:'topics',title:'Мои темы',sub:'Плитки персональных интересов',icon:'i-bookmark',size:'m'},
+    {id:'continue',title:'Продолжить работу',sub:'Незавершённые материалы и сервисы',icon:'i-undo',size:'m'},
+    {id:'updates',title:'Обновления клинрекомендаций и ОХЛП',sub:'Сигналы безопасности и новые версии',icon:'i-doc',size:'m'},
+    {id:'quiz',title:'Тренажёр / квиз дня',sub:'Один кейс или вопрос',icon:'i-quiz',size:'s'},
+    {id:'cme',title:'Курсы / НМО / аккредитация',sub:'Дедлайны и прогресс',icon:'i-graduate',size:'s'},
+    {id:'fav',title:'Избранное',sub:'Сохранённые статьи, препараты, инструменты',icon:'i-star',size:'s'}
+  ];
+  catalog.forEach(c=>{
+    const added = App.widgets.some(w=>w.id===c.id && !w.hidden);
+    const t = el(`<div class="add-tile${added?' added':''}">
+      <span class="at-icon"><svg class="icon icon-sm"><use href="#${c.icon}"/></svg></span>
+      <div><div class="at-title">${c.title}</div><div class="at-sub">${c.sub}</div></div>
+    </div>`);
+    if(!added){
+      t.addEventListener('click',()=>{
+        const existing = App.widgets.find(w=>w.id===c.id);
+        if(existing){ existing.hidden=false; }
+        else App.widgets.push({id:c.id,title:c.title,size:c.size,hidden:false,collapsed:false,pinned:false});
+        renderAll();
+        openAddPanel();
+      });
+    }
+    body.appendChild(t);
+  });
+}
+$$('[data-close-panel]').forEach(b=>b.addEventListener('click',()=>$('#add-panel').classList.remove('open')));
+
+/* =============================================================================
+   NOTES & TASKS bindings
+   ============================================================================= */
+$('#add-note').addEventListener('click',()=>{
+  const v = $('#note-input').value.trim();
+  if(!v) return;
+  App.notes.unshift({text:v,meta:'только что'});
+  $('#note-input').value='';
+  renderRight();
+});
+$('#note-input').addEventListener('keydown',e=>{if(e.key==='Enter')$('#add-note').click();});
+
+// Right-section collapsing
+$$('.right .r-section .r-head').forEach(h=>h.addEventListener('click',()=>{
+  h.parentElement.classList.toggle('collapsed');
+}));
+
+/* =============================================================================
+   LOGIN FLOW
+   ============================================================================= */
+function openLogin(){ $('#login-overlay').classList.add('open'); resetLoginUI(); }
+function closeLogin(){ $('#login-overlay').classList.remove('open'); }
+function resetLoginUI(){
+  ['login-step-email','login-step-existing','login-step-password','login-step-magic-sent','login-step-old-user','login-step-register'].forEach((id,i)=>{
+    $('#'+id).classList.toggle('hidden', i!==0);
+  });
+  $('#login-continue').textContent='Продолжить';
+}
+function showLoginStep(id){
+  ['login-step-email','login-step-existing','login-step-password','login-step-magic-sent','login-step-old-user','login-step-register']
+    .forEach(s=>$('#'+s).classList.toggle('hidden', s!==id));
+}
+$('#login-cancel').addEventListener('click',closeLogin);
+$('#login-continue').addEventListener('click',()=>{
+  // figure out current step
+  const steps = ['login-step-email','login-step-existing','login-step-password','login-step-magic-sent','login-step-old-user','login-step-register'];
+  const cur = steps.find(s=>!$('#'+s).classList.contains('hidden'));
+  if(cur==='login-step-email'){
+    const e = $('#login-email').value.trim().toLowerCase();
+    if(!e){ alert('Введите email'); return; }
+    if(e.includes('old')||e.endsWith('@aknaucer.ru')){
+      $('#ex-email').textContent = e;
+      showLoginStep('login-step-old-user');
+    } else if(e.includes('@') && (e.startsWith('anna')||e.startsWith('test')||e.startsWith('user'))){
+      $('#ex-email').textContent = e;
+      showLoginStep('login-step-existing');
+    } else {
+      showLoginStep('login-step-register');
+      $('#login-continue').textContent='Создать аккаунт';
+    }
+  } else if(cur==='login-step-register'){
+    if(!$('#reg-prof').checked||!$('#reg-tos').checked){alert('Подтвердите чекбоксы');return;}
+    closeLogin();
+    openOnboarding();
+  } else if(cur==='login-step-existing' || cur==='login-step-old-user' || cur==='login-step-password'){
+    closeLogin();
+    setState('dashboard');
+  } else {
+    closeLogin();
+  }
+});
+$('#send-magic').addEventListener('click',()=>{
+  $('#magic-email').textContent = $('#login-email').value;
+  showLoginStep('login-step-magic-sent');
+});
+$('#use-password').addEventListener('click',()=>showLoginStep('login-step-password'));
+$('#simulate-click-magic').addEventListener('click',()=>{closeLogin();setState('dashboard');});
+$('#old-magic').addEventListener('click',()=>{
+  $('#magic-email').textContent = $('#login-email').value;
+  showLoginStep('login-step-magic-sent');
+});
+$('#old-password').addEventListener('click',()=>showLoginStep('login-step-password'));
+$('#login-submit').addEventListener('click',()=>{closeLogin();setState('dashboard');});
+
+/* =============================================================================
+   ONBOARDING FLOW
+   ============================================================================= */
+function openOnboarding(){
+  App.onbStep=0; App.onbData={role:'',template:'',services:[],format:'',spec:''};
+  $('#onb-overlay').classList.add('open');
+  renderOnb();
+}
+function closeOnboarding(){ $('#onb-overlay').classList.remove('open'); }
+const ONB = [
+  {title:'Кто вы',sub:'Это нужно, чтобы подобрать стартовый набор сервисов.',
+   render:()=>`
+    <div class="role-grid">
+      ${[
+        ['doc','Врач','доступ к клинрекомендациям, ОХЛП, калькуляторам'],
+        ['pharm','Провизор / фармацевт','инструкции, взаимодействия, новости фармы'],
+        ['medr','Медпред','препараты, обновления, дайджесты'],
+        ['stud','Студент','тренажёры, тесты, подготовка'],
+        ['ord','Ординатор','клинические разборы, тренажёры, тесты'],
+        ['teacher','Преподаватель / сотрудник вуза','курсы, тесты, материалы']
+      ].map(([id,t,s])=>`
+        <div class="role-tile ${App.onbData.role===id?'selected':''}" data-role="${id}">
+          <div class="rt-title">${t}</div><div class="rt-sub">${s}</div>
+        </div>`).join('')}
+    </div>`,
+   bind:body=>$$('.role-tile',body).forEach(t=>t.addEventListener('click',()=>{
+     App.onbData.role=t.dataset.role;
+     $$('.role-tile',body).forEach(x=>x.classList.toggle('selected',x===t));
+   }))},
+  {title:'Специальность и интересы',sub:'Перечислите 2–5 тем, по которым хотите видеть новости и обновления.',
+   render:()=>`
+    <div class="field"><label>Специальность / интересы</label>
+      <input id="onb-spec" placeholder="Кардиология, антикоагулянты, ХСН" value="${esc(App.onbData.spec||'')}"/></div>
+    <div style="margin-top:8px;color:var(--text-muted);font-size:13px">Подсказки:</div>
+    <div class="nl-suggestions">
+      ${['Кардиология','Эндокринология','Антибиотики','Антикоагулянты','НМО','Педиатрия'].map(s=>`<span class="dd-suggestion" data-s="${s}">${s}</span>`).join('')}
+    </div>`,
+   bind:body=>{
+     $('#onb-spec',body).addEventListener('input',e=>App.onbData.spec=e.target.value);
+     $$('.dd-suggestion',body).forEach(s=>s.addEventListener('click',()=>{
+       const inp=$('#onb-spec',body);
+       inp.value = (inp.value? inp.value+', ':'') + s.dataset.s;
+       App.onbData.spec=inp.value;
+     }));
+   }},
+  {title:'Что показывать на главной',sub:'Можно изменить позже текстовой настройкой или вручную.',
+   render:()=>{
+     const opts = [
+       ['news','Новости'],['cr','Клинрекомендации'],['ohlp','ОХЛП'],
+       ['trainer','Тренажёры'],['tr','Перевод'],['mic','Транскрибация'],['cme','НМО']
+     ];
+     return `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+       ${opts.map(([id,l])=>`<label class="checkbox"><input type="checkbox" data-svc="${id}" ${App.onbData.services.includes(id)?'checked':''}/> ${l}</label>`).join('')}
+     </div>
+     <div class="field" style="margin-top:14px"><label>Предпочтительный формат</label>
+       <select id="onb-fmt"><option ${App.onbData.format==='text'?'selected':''} value="text">Текст</option>
+       <option ${App.onbData.format==='video'?'selected':''} value="video">Видео</option>
+       <option ${App.onbData.format==='mix'?'selected':''} value="mix">Смешанный</option></select>
+     </div>`;
+   },
+   bind:body=>{
+     $$('input[data-svc]',body).forEach(c=>c.addEventListener('change',e=>{
+       const id=e.target.dataset.svc;
+       if(e.target.checked) App.onbData.services.push(id);
+       else App.onbData.services = App.onbData.services.filter(x=>x!==id);
+     }));
+     $('#onb-fmt',body).addEventListener('change',e=>App.onbData.format=e.target.value);
+   }},
+  {title:'Стартовый шаблон рабочего стола',sub:'Можно выбрать готовый шаблон или начать с пустого.',
+   render:()=>`
+    <div class="template-grid">
+      ${[
+        ['doc','Врач-практик','Новости + клинрек + ОХЛП + калькуляторы'],
+        ['ord','Ординатор','Тренажёры + тесты + разборы'],
+        ['medr','Медпред','Препараты + дайджесты + заметки'],
+        ['pharm','Фармспециалист','ОХЛП + взаимодействия'],
+        ['teacher','Преподаватель','Курсы + тесты + материалы'],
+        ['empty','Пустой','Соберу сам с нуля']
+      ].map(([id,t,s])=>`
+        <div class="tmpl-tile ${App.onbData.template===id?'selected':''}" data-tmpl="${id}">
+          <div class="tt-title">${t}</div><div class="tt-sub">${s}</div></div>`).join('')}
+    </div>`,
+   bind:body=>$$('.tmpl-tile',body).forEach(t=>t.addEventListener('click',()=>{
+     App.onbData.template=t.dataset.tmpl;
+     $$('.tmpl-tile',body).forEach(x=>x.classList.toggle('selected',x===t));
+   }))},
+  {title:'Опишите своими словами',sub:'Например: «Я кардиолог, хочу новости по антикоагулянтам, клинрекомендации, калькуляторы и короткие тесты».',
+   render:()=>`
+    <div class="field"><label>Что хотите видеть на главной</label>
+      <textarea id="onb-nl" placeholder="Опишите, что вы хотите видеть на главной странице"></textarea></div>
+    <div class="state-banner info">
+      <svg class="icon"><use href="#i-spark"/></svg>
+      <div>На основе ответов мы соберём черновик рабочего стола. После открытия его можно будет менять текстом.</div>
+    </div>`,
+   bind:()=>{}}
+];
+function renderOnb(){
+  const step = ONB[App.onbStep];
+  $('#onb-title').textContent = step.title;
+  $('#onb-sub').textContent = step.sub;
+  const stepsRow = $('.modal .steps');
+  stepsRow.innerHTML = ONB.map((_,i)=>`<div class="step ${i<=App.onbStep?'on':''}"></div>`).join('');
+  const body = $('#onb-body');
+  body.innerHTML = step.render();
+  step.bind(body);
+  $('#onb-back').textContent = App.onbStep===0?'Закрыть':'Назад';
+  $('#onb-next').textContent = App.onbStep===ONB.length-1?'Открыть рабочий стол':'Далее';
+}
+$('#onb-next').addEventListener('click',()=>{
+  if(App.onbStep===ONB.length-1){
+    closeOnboarding();
+    setState('dashboard');
+    return;
+  }
+  App.onbStep++; renderOnb();
+});
+$('#onb-back').addEventListener('click',()=>{
+  if(App.onbStep===0){ closeOnboarding(); return; }
+  App.onbStep--; renderOnb();
+});
+
+/* =============================================================================
+   FAV EDIT
+   ============================================================================= */
+$('#fav-edit').addEventListener('click',()=>alert('Режим редактирования избранного: используйте стрелки в строках или drag-and-drop (демо).'));
+
+/* =============================================================================
+   STATE SWITCHER
+   ============================================================================= */
+$$('#ss .ss-btn').forEach(b=>b.addEventListener('click',()=>setState(b.dataset.state)));
+$('#ss-toggle').addEventListener('click',()=>$('#ss').classList.toggle('collapsed'));
+
+/* =============================================================================
+   INIT
+   ============================================================================= */
+bindHeader();
+renderAll();
+</script>
+</body>
+</html>
