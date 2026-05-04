@@ -190,17 +190,21 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
 .app.edit-mode .widget.drop-after{box-shadow:4px 0 0 var(--primary),var(--shadow)}
 .app.edit-mode .w-head{cursor:grab}
 .app.edit-mode .w-head:active{cursor:grabbing}
-.w-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.w-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
-.w-title .pin{color:var(--primary)}
-.w-controls{margin-left:auto;display:flex;gap:2px;align-items:center}
-.w-controls button{width:26px;height:26px;border:none;background:transparent;color:var(--text-dim);border-radius:5px;display:inline-flex;align-items:center;justify-content:center}
+.w-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;row-gap:6px}
+.w-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;line-height:1.3}
+.w-title .pin{color:var(--primary);flex:none}
+.w-controls{margin-left:auto;display:flex;gap:2px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.w-controls button{width:26px;height:26px;border:none;background:transparent;color:var(--text-dim);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .w-controls button:hover{background:var(--bg);color:var(--text)}
-.w-controls .size-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-right:4px}
+.w-controls .size-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-right:4px;flex:none}
 .w-controls .size-toggle button{width:24px;height:24px;border-radius:0;color:var(--text-muted);font-size:11px;font-weight:600}
 .w-controls .size-toggle button.on{background:var(--primary-soft);color:var(--primary)}
-.w-edit-only{display:none}
-.app.edit-mode .w-edit-only{display:inline-flex}
+.w-controls .w-edit-only{display:none}
+.app.edit-mode .w-controls .w-edit-only{display:inline-flex}
+/* At S size, controls drop below the title so the title isn't squeezed */
+.widget.size-s .w-title{flex-basis:100%}
+.widget.size-s .w-controls{margin-left:0;width:100%;justify-content:flex-end}
+.widget.size-s .w-controls .size-toggle{margin-right:auto}
 .w-body{flex:1}
 .w-foot{margin-top:10px;display:flex;align-items:center;gap:6px}
 .w-foot a{color:var(--primary);font-size:13px;font-weight:500;cursor:pointer}
@@ -226,6 +230,7 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
 .chip-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
 
 .qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.widget.size-s .qa-grid{grid-template-columns:1fr}
 .qa-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-size:13px;text-align:left;cursor:pointer;transition:.15s}
 .qa-btn:hover{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
 .qa-btn .icon{color:var(--primary)}
@@ -299,6 +304,7 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
 .cme-meta .ci-sub{font-size:12px;color:var(--text-dim)}
 
 .fav-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.widget.size-s .fav-list{grid-template-columns:1fr}
 .fav-card{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer}
 .fav-card:hover{border-color:var(--primary)}
 .fav-card .icon{color:var(--primary)}
@@ -456,10 +462,35 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
   .app.mobile-left-open .left{transform:translateX(0)}
   .app.mobile-right-open .right{transform:translateX(0)}
   .app.left-collapsed{grid-template-columns:0 1fr 0}
+  .head{padding:0 8px;gap:6px}
+  .head-actions{gap:2px}
   .head .desktop-only{display:none!important}
   .head .mobile-only{display:inline-flex!important}
-  .search{margin:0 6px}
+  /* Compact logo: keep only the brand mark, drop the wordmark + tags */
+  .logo{padding:0;gap:0}
+  .logo > span:not(.logo-mark){display:none}
   .workspace-tag,.role-badge{display:none}
+  /* Hide inline search on mobile — surfaces via #btn-mobile-search overlay */
+  .search{display:none}
+  /* "+ Создать" becomes icon-only */
+  #btn-create{padding:0;width:36px;min-width:36px;justify-content:center}
+  #btn-create > span{display:none}
+  /* Mobile search overlay: tapping search icon slides input down across header */
+  .app.mobile-search-open .search{
+    display:block;position:fixed;top:0;left:0;right:0;height:var(--header-h);
+    margin:0;padding:12px 12px;background:var(--surface);z-index:100;border-bottom:1px solid var(--border);
+    max-width:none;
+  }
+  .app.mobile-search-open .search-input{height:40px;padding-right:44px}
+  .app.mobile-search-open .search::after{
+    content:"";position:absolute;top:18px;right:18px;width:28px;height:28px;
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6577' stroke-width='2' stroke-linecap='round'><path d='M6 6l12 12M6 18L18 6'/></svg>") center/22px no-repeat;
+    cursor:pointer;
+  }
+  .app.mobile-search-open .search-dd{
+    position:fixed;top:var(--header-h);left:0;right:0;border-radius:0;border-left:0;border-right:0;
+    margin:0;max-height:calc(100vh - var(--header-h));z-index:99;
+  }
   .grid{display:flex;flex-direction:column}
   .widget.size-s,.widget.size-m,.widget.size-l{grid-column:auto}
   .qa-grid{grid-template-columns:1fr}
@@ -473,6 +504,13 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
 .mobile-only{display:none}
 @media(min-width:901px){
   .head .mobile-only{display:none!important}
+}
+/* Tablet portrait: keep 2-col grid for S widgets so the screen isn't sparse */
+@media(min-width:720px) and (max-width:900px){
+  .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:14px}
+  .widget.size-s{grid-column:span 4}
+  .widget.size-m{grid-column:span 8}
+  .widget.size-l{grid-column:span 8}
 }
 
 /* utility */
@@ -592,6 +630,9 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--text)}
     </div>
 
     <div class="head-actions">
+      <button class="icon-btn mobile-only" id="btn-mobile-search" title="Поиск" aria-label="Поиск">
+        <svg class="icon"><use href="#i-search"/></svg>
+      </button>
       <button class="btn btn-ghost desktop-only" id="btn-customize" title="Настроить рабочий стол">
         <svg class="icon"><use href="#i-settings"/></svg><span>Настроить рабочий стол</span>
       </button>
@@ -1877,6 +1918,21 @@ function bindHeader(){
   });
   $('#btn-mobile-left').addEventListener('click',()=>$('#app').classList.toggle('mobile-left-open'));
   $('#btn-mobile-right').addEventListener('click',()=>$('#app').classList.toggle('mobile-right-open'));
+  $('#btn-mobile-search')?.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    $('#app').classList.add('mobile-search-open');
+    $('#search-box').classList.add('open');
+    setTimeout(()=>$('#search-input').focus(),50);
+  });
+  // Close mobile search via the X pseudo-element (clicks on .search top-right)
+  $('#search-box').addEventListener('click',(e)=>{
+    if(!$('#app').classList.contains('mobile-search-open')) return;
+    const r = $('#search-box').getBoundingClientRect();
+    if(e.clientX > r.right - 44 && e.clientY < r.top + 44){
+      $('#app').classList.remove('mobile-search-open');
+      $('#search-box').classList.remove('open');
+    }
+  });
   $('#btn-toggle-right').addEventListener('click',()=>{
     App.rightHidden = !App.rightHidden;
     renderApp();
